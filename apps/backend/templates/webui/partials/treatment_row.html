@@ -1,0 +1,29 @@
+{% load i18n %}
+<tr id="treatment-row-{{ treatment.id }}">
+  <td>{{ treatment.title }}</td>
+  <td>{% if treatment.control %}{{ treatment.control.name }}{% endif %}</td>
+  <td>{{ treatment.owner }}</td>
+  <td>{{ treatment.due_date }}</td>
+  <td>{{ treatment.progress_percent }}%</td>
+  <td>{{ treatment.get_status_display }}</td>
+  <td>
+    {% if can_manage_risks %}
+    <form method="post"
+          hx-post="{% url 'webui:treatment-progress-update' treatment.id %}"
+          hx-target="#treatment-row-{{ treatment.id }}"
+          hx-swap="outerHTML"
+          class="actions">
+      {% csrf_token %}
+      <input type="number" min="0" max="100" name="progress_percent" value="{{ treatment.progress_percent }}" />
+      <select name="status">
+        {% for value, label in treatment_status_choices %}
+          <option value="{{ value }}" {% if treatment.status == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+      <button type="submit">{% trans "Save" %}</button>
+    </form>
+    {% else %}
+    <span class="muted">{% trans "Read only" %}</span>
+    {% endif %}
+  </td>
+</tr>

@@ -1,0 +1,30 @@
+{% extends "webui/base.html" %}
+{% load i18n %}
+{% block content %}
+<div class="card">
+  <h1>{% trans "Reports" %}</h1>
+  <p class="muted">{% trans "Standard reporting packs and schedules." %}</p>
+  <div class="row" style="margin-top: 16px;">
+    <div class="card">
+      <h3>{% trans "Scheduled Reports" %}</h3>
+      <p class="muted">{% trans "Manage recurring risk report deliveries." %}</p>
+      <a class="btn btn-outline-primary" href="{% url 'webui:risk-reports' %}">{% trans "View" %}</a>
+    </div>
+    <div class="card">
+      <h3>{% trans "Assessment Reports" %}</h3>
+      <p class="muted">{% trans "Status overview for assessments." %}</p>
+      <a class="btn btn-outline-primary" href="{% url 'webui:assessment-reports' %}">{% trans "View" %}</a>
+    </div>
+    <div class="card">
+      <h3>{% trans "Vulnerability Reports" %}</h3>
+      <p class="muted">{% trans "Severity and status tracking." %}</p>
+      <a class="btn btn-outline-primary" href="{% url 'webui:vulnerability-reports' %}">{% trans "View" %}</a>
+    </div>
+    <div class="card">
+      <h3>{% trans "Compliance Reports" %}</h3>
+      <p class="muted">{% trans "Framework requirement coverage." %}</p>
+      <a class="btn btn-outline-primary" href="{% url 'webui:compliance-reports' %}">{% trans "View" %}</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

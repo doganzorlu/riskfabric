@@ -1,0 +1,139 @@
+{% extends "webui/base.html" %}
+{% load i18n %}
+{% block content %}
+<div class="card">
+  <h1>{% trans "Policy Mappings" %}</h1>
+</div>
+
+<div class="row">
+  <div class="card">
+    <h2>{% trans "Policy -> Control" %}</h2>
+    <form method="get" class="filter-grid" style="margin-top: 12px;">
+      <div>
+        <input id="policy-control-filter" type="text" name="control_q" value="{{ control_query }}" placeholder="{% trans 'Policy or control' %}" aria-label="{% trans 'Search Control Mappings' %}" />
+      </div>
+      <div class="actions">
+        <button type="submit" class="btn btn-primary">{% trans "Filter" %}</button>
+      </div>
+    </form>
+    {% if can_manage_risks %}
+    <form method="post" style="margin-top: 12px;">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="save_control" />
+      {{ control_form.as_p }}
+      <button type="submit" class="btn btn-primary">{% trans "Save Mapping" %}</button>
+      <a href="{% url 'webui:policy-mappings' %}" class="btn btn-outline-secondary">{% trans "Cancel" %}</a>
+    </form>
+    {% else %}
+    <p class="muted">{% trans "You do not have permission to manage policy mappings." %}</p>
+    {% endif %}
+    <table class="table table-striped table-hover" style="margin-top: 12px;">
+      <thead>
+        <tr>
+          <th>{% trans "Policy" %}</th>
+          <th>{% trans "Control" %}</th>
+          <th>{% trans "Notes" %}</th>
+          <th>{% trans "Actions" %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in control_mappings %}
+        <tr>
+          <td>{{ item.policy.name }}</td>
+          <td>{{ item.control.name }}</td>
+          <td>{{ item.notes }}</td>
+          <td class="actions">
+            {% if can_manage_risks %}
+            <form method="post" style="display:inline;" onsubmit="return confirm('{% trans "Delete this mapping?" %}');">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="delete_control" />
+              <input type="hidden" name="mapping_id" value="{{ item.id }}" />
+              <button type="submit" class="btn btn-danger btn-sm">{% trans "Delete" %}</button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4">{% trans "No control mappings found." %}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% if control_page_obj %}
+    <div class="actions" style="margin-top: 12px;">
+      {% if control_page_obj.has_previous %}
+        <a href="?control_q={{ control_query }}&control_page={{ control_page_obj.previous_page_number }}">{% trans "Previous" %}</a>
+      {% endif %}
+      <span class="muted">{% trans "Page" %} {{ control_page_obj.number }} / {{ control_page_obj.paginator.num_pages }}</span>
+      {% if control_page_obj.has_next %}
+        <a href="?control_q={{ control_query }}&control_page={{ control_page_obj.next_page_number }}">{% trans "Next" %}</a>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <h2>{% trans "Policy -> Risk" %}</h2>
+    <form method="get" class="filter-grid" style="margin-top: 12px;">
+      <div>
+        <input id="policy-risk-filter" type="text" name="risk_q" value="{{ risk_query }}" placeholder="{% trans 'Policy or risk' %}" aria-label="{% trans 'Search Risk Mappings' %}" />
+      </div>
+      <div class="actions">
+        <button type="submit" class="btn btn-primary">{% trans "Filter" %}</button>
+      </div>
+    </form>
+    {% if can_manage_risks %}
+    <form method="post" style="margin-top: 12px;">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="save_risk" />
+      {{ risk_form.as_p }}
+      <button type="submit" class="btn btn-primary">{% trans "Save Mapping" %}</button>
+      <a href="{% url 'webui:policy-mappings' %}" class="btn btn-outline-secondary">{% trans "Cancel" %}</a>
+    </form>
+    {% else %}
+    <p class="muted">{% trans "You do not have permission to manage policy mappings." %}</p>
+    {% endif %}
+    <table class="table table-striped table-hover" style="margin-top: 12px;">
+      <thead>
+        <tr>
+          <th>{% trans "Policy" %}</th>
+          <th>{% trans "Risk" %}</th>
+          <th>{% trans "Notes" %}</th>
+          <th>{% trans "Actions" %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in risk_mappings %}
+        <tr>
+          <td>{{ item.policy.name }}</td>
+          <td>{{ item.risk.title }}</td>
+          <td>{{ item.notes }}</td>
+          <td class="actions">
+            {% if can_manage_risks %}
+            <form method="post" style="display:inline;" onsubmit="return confirm('{% trans "Delete this mapping?" %}');">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="delete_risk" />
+              <input type="hidden" name="mapping_id" value="{{ item.id }}" />
+              <button type="submit" class="btn btn-danger btn-sm">{% trans "Delete" %}</button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4">{% trans "No risk mappings found." %}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% if risk_page_obj %}
+    <div class="actions" style="margin-top: 12px;">
+      {% if risk_page_obj.has_previous %}
+        <a href="?risk_q={{ risk_query }}&risk_page={{ risk_page_obj.previous_page_number }}">{% trans "Previous" %}</a>
+      {% endif %}
+      <span class="muted">{% trans "Page" %} {{ risk_page_obj.number }} / {{ risk_page_obj.paginator.num_pages }}</span>
+      {% if risk_page_obj.has_next %}
+        <a href="?risk_q={{ risk_query }}&risk_page={{ risk_page_obj.next_page_number }}">{% trans "Next" %}</a>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

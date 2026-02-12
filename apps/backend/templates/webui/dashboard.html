@@ -1,0 +1,244 @@
+{% extends "webui/base.html" %}
+{% load i18n %}
+{% block extra_head %}
+<style>
+  .row-golden { display: grid; grid-template-columns: 1.618fr 1fr; gap: 16px; }
+  .metric-card { background: #fff; border: 1px solid #e4edf5; border-radius: 14px; padding: 14px 16px; }
+  .metric-title { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: #5b6b79; }
+  .metric-value { font-size: 24px; font-weight: 700; color: #16212a; }
+  .metric-subtle { color: #5b6b79; font-size: 12px; margin-top: 4px; }
+  .chart-grid { display: grid; grid-template-columns: repeat(2, minmax(260px, 1fr)); gap: 16px; }
+  .chart-card { min-height: 280px; }
+  @media (max-width: 900px) {
+    .row-golden { grid-template-columns: 1fr; }
+    .chart-grid { grid-template-columns: 1fr; }
+  }
+</style>
+{% endblock %}
+{% block content %}
+<div class="card">
+  <h1>{% trans "Dashboard" %}</h1>
+  <p>{% trans "Use this portal for day-to-day risk operations. Admin users can also access the Django admin panel." %}</p>
+</div>
+<div class="kpi">
+  <div class="metric-card">
+    <div class="metric-title">{% trans "Assets" %}</div>
+    <div class="metric-value">{{ asset_count }}</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-title">{% trans "All Risks" %}</div>
+    <div class="metric-value">{{ risk_count }}</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-title">{% trans "Open Risks" %}</div>
+    <div class="metric-value">{{ open_risk_count }}</div>
+  </div>
+</div>
+<div class="kpi">
+  <div class="metric-card">
+    <div class="metric-title">{% trans "Controls Library" %}</div>
+    <div class="metric-value">{{ control_count }}</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-title">{% trans "Treatments" %}</div>
+    <div class="metric-value">{{ treatment_count }}</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-title">{% trans "Scoring Methods" %}</div>
+    <div class="metric-value">{{ scoring_method_count }}</div>
+  </div>
+</div>
+<div class="kpi">
+  <div class="metric-card">
+    <div class="metric-title">{% trans "Overdue Treatments" %}</div>
+    <div class="metric-value">{{ overdue_treatment_count }}</div>
+    <div class="metric-subtle"><a href="{% url 'webui:work-queue' %}">{% trans "Open Work Queue" %}</a></div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-title">{% trans "Upcoming Reviews (7d)" %}</div>
+    <div class="metric-value">{{ upcoming_review_count }}</div>
+    <div class="metric-subtle"><a href="{% url 'webui:work-queue' %}">{% trans "Open Work Queue" %}</a></div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-title">{% trans "Pending Approvals" %}</div>
+    <div class="metric-value">{{ pending_approval_count }}</div>
+    <div class="metric-subtle"><a href="{% url 'webui:risk-list' %}">{% trans "Open Risks" %}</a></div>
+  </div>
+</div>
+<div class="kpi">
+  <div class="metric-card">
+    <div class="metric-title">{% trans "Open Issues" %}</div>
+    <div class="metric-value">{{ open_issue_count }}</div>
+    <div class="metric-subtle"><a href="{% url 'webui:risk-issues' %}">{% trans "View Issues" %}</a></div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-title">{% trans "Active Exceptions" %}</div>
+    <div class="metric-value">{{ open_exception_count }}</div>
+    <div class="metric-subtle"><a href="{% url 'webui:risk-exceptions' %}">{% trans "View Exceptions" %}</a></div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-title">{% trans "Unread Notifications" %}</div>
+    <div class="metric-value">{{ unread_notification_count }}</div>
+    <div class="metric-subtle"><a href="{% url 'webui:risk-notifications' %}">{% trans "Open Notifications" %}</a></div>
+  </div>
+</div>
+<div class="kpi">
+  <div class="metric-card">
+    <div class="metric-title">{% trans "Assessments" %}</div>
+    <div class="metric-value">{{ assessment_count }}</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-title">{% trans "Vulnerabilities" %}</div>
+    <div class="metric-value">{{ vulnerability_count }}</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-title">{% trans "Governance Programs" %}</div>
+    <div class="metric-value">{{ governance_program_count }}</div>
+  </div>
+</div>
+<div class="kpi">
+  <div class="metric-card">
+    <div class="metric-title">{% trans "Compliance Frameworks" %}</div>
+    <div class="metric-value">{{ compliance_framework_count }}</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-title">{% trans "Compliance Requirements" %}</div>
+    <div class="metric-value">{{ compliance_requirement_count }}</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-title">{% trans "Reports" %}</div>
+    <div class="metric-value">{{ report_schedule_count }}</div>
+    <div class="metric-subtle"><a href="{% url 'webui:reports-overview' %}">{% trans "Reports Overview" %}</a></div>
+  </div>
+</div>
+<div class="card">
+  <h3>{% trans "Quick Links" %}</h3>
+  <p class="muted">{% trans "Jump to common operational tasks." %}</p>
+  <div class="actions">
+    <a href="{% url 'webui:risk-list' %}">{% trans "Risk Register" %}</a>
+    <a href="{% url 'webui:risk-heatmap' %}">{% trans "Risk Heatmap" %}</a>
+    <a href="{% url 'webui:location-tree' %}">{% trans "Location Tree" %}</a>
+    <a href="{% url 'webui:risk-controls' %}">{% trans "Controls Library" %}</a>
+    <a href="{% url 'webui:risk-reports' %}">{% trans "Scheduled Reports" %}</a>
+  </div>
+</div>
+<div class="card">
+  <h3>{% trans "Status Charts" %}</h3>
+  <div class="chart-grid" style="margin-top: 12px;">
+    <div class="card chart-card">
+      <div class="actions" style="justify-content: space-between;">
+        <h4 style="margin: 0;">{% trans "Risk Status Distribution" %}</h4>
+        <a class="btn btn-outline-secondary btn-sm" href="{% url 'webui:reports-export' 'risk_status' %}">{% trans "Export CSV" %}</a>
+      </div>
+      <canvas id="risk-status-chart" height="180"></canvas>
+    </div>
+    <div class="card chart-card">
+      <div class="actions" style="justify-content: space-between;">
+        <h4 style="margin: 0;">{% trans "Vulnerability Status Distribution" %}</h4>
+        <a class="btn btn-outline-secondary btn-sm" href="{% url 'webui:reports-export' 'vulnerability_status' %}">{% trans "Export CSV" %}</a>
+      </div>
+      <canvas id="vuln-status-chart" height="180"></canvas>
+    </div>
+    <div class="card chart-card">
+      <div class="actions" style="justify-content: space-between;">
+        <h4 style="margin: 0;">{% trans "Vulnerability Severity Distribution" %}</h4>
+        <a class="btn btn-outline-secondary btn-sm" href="{% url 'webui:reports-export' 'vulnerability_severity' %}">{% trans "Export CSV" %}</a>
+      </div>
+      <canvas id="vuln-severity-chart" height="180"></canvas>
+    </div>
+    <div class="card chart-card">
+      <div class="actions" style="justify-content: space-between;">
+        <h4 style="margin: 0;">{% trans "Compliance Status Distribution" %}</h4>
+        <a class="btn btn-outline-secondary btn-sm" href="{% url 'webui:reports-export' 'compliance_status' %}">{% trans "Export CSV" %}</a>
+      </div>
+      <canvas id="compliance-status-chart" height="180"></canvas>
+    </div>
+  </div>
+</div>
+<div class="row">
+  <div class="card">
+    <h3>{% trans "Last EAM Sync" %}</h3>
+    {% if last_sync %}
+      <p>{% trans "Status" %}: {{ last_sync.status }}</p>
+      <p>{% trans "Plugin" %}: {{ last_sync.plugin_name }}:{{ last_sync.plugin_version }}</p>
+      <p>{% trans "At" %}: {{ last_sync.created_at|date:"Y-m-d H:i" }}</p>
+    {% else %}
+      <p>{% trans "No sync run yet." %}</p>
+    {% endif %}
+  </div>
+  <div class="card">
+    <h3>{% trans "Last Scheduled Report" %}</h3>
+    {% if last_report_run %}
+      <p>{% trans "Schedule" %}: {{ last_report_run.schedule.name }}</p>
+      <p>{% trans "Status" %}: {{ last_report_run.status }}</p>
+      <p>{% trans "At" %}: {{ last_report_run.created_at|date:"Y-m-d H:i" }}</p>
+    {% else %}
+      <p>{% trans "No report run yet." %}</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+  const statusLabels = {{ status_labels|safe|default:"[]" }};
+  const statusValues = {{ status_values|safe|default:"[]" }};
+  const vulnStatusLabels = {{ vulnerability_status_labels|safe|default:"[]" }};
+  const vulnStatusValues = {{ vulnerability_status_values|safe|default:"[]" }};
+  const vulnSeverityLabels = {{ vulnerability_severity_labels|safe|default:"[]" }};
+  const vulnSeverityValues = {{ vulnerability_severity_values|safe|default:"[]" }};
+  const complianceStatusLabels = {{ compliance_status_labels|safe|default:"[]" }};
+  const complianceStatusValues = {{ compliance_status_values|safe|default:"[]" }};
+
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: true,
+        position: "bottom",
+        labels: {
+          usePointStyle: true,
+          boxWidth: 10,
+          boxHeight: 10,
+          padding: 14,
+        },
+      },
+      tooltip: {
+        callbacks: {
+          label: (context) => {
+            const label = context.label || "";
+            const value = context.parsed || 0;
+            const total = context.dataset.data.reduce((sum, val) => sum + val, 0) || 1;
+            const pct = Math.round((value / total) * 100);
+            return `${label}: ${value} (${pct}%)`;
+          },
+        },
+      },
+    },
+  };
+
+  const makeChart = (id, labels, values, colors) => {
+    const canvas = document.getElementById(id);
+    if (!canvas) return;
+    if (!labels || labels.length === 0) return;
+    return new Chart(canvas, {
+      type: "doughnut",
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            data: values,
+            backgroundColor: colors,
+          },
+        ],
+      },
+      options: chartOptions,
+    });
+  };
+
+  makeChart("risk-status-chart", statusLabels, statusValues, ["#3b82f6", "#22c55e", "#f97316", "#ef4444"]);
+  makeChart("vuln-status-chart", vulnStatusLabels, vulnStatusValues, ["#0ea5e9", "#22c55e", "#f59e0b", "#ef4444"]);
+  makeChart("vuln-severity-chart", vulnSeverityLabels, vulnSeverityValues, ["#10b981", "#f59e0b", "#f97316", "#dc2626"]);
+  makeChart("compliance-status-chart", complianceStatusLabels, complianceStatusValues, ["#22c55e", "#f59e0b", "#ef4444", "#94a3b8", "#64748b"]);
+</script>
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends "webui/base.html" %}
+{% load i18n %}
+{% block content %}
+<div class="card">
+  <h1>{% trans "Compliance Reports" %}</h1>
+  <form method="get" class="filter-grid" style="margin-top: 12px;">
+    <div>
+      <input id="compliance-report-filter" type="text" name="q" value="{{ query }}" placeholder="{% trans 'Code, title, status' %}" aria-label="{% trans 'Search Compliance Reports' %}" />
+    </div>
+    <div class="actions">
+      <button type="submit" class="btn btn-primary">{% trans "Filter" %}</button>
+    </div>
+  </form>
+</div>
+
+<div class="card">
+  <h2>{% trans "Compliance Coverage Overview" %}</h2>
+  <table class="table table-striped table-hover">
+    <thead>
+      <tr>
+        <th>{% trans "Framework" %}</th>
+        <th>{% trans "Code" %}</th>
+        <th>{% trans "Title" %}</th>
+        <th>{% trans "Status" %}</th>
+        <th>{% trans "Control" %}</th>
+        <th>{% trans "Last Reviewed" %}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in requirements %}
+      <tr>
+        <td>{{ item.framework.code }}</td>
+        <td>{{ item.code }}</td>
+        <td>{{ item.title }}</td>
+        <td>{{ item.get_status_display }}</td>
+        <td>{% if item.control %}{{ item.control.code }}{% endif %}</td>
+        <td>{{ item.last_reviewed|default:"-" }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="6">{% trans "No requirements found." %}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% if page_obj %}
+  <div class="actions" style="margin-top: 12px;">
+    {% if page_obj.has_previous %}
+      <a href="?q={{ query }}&page={{ page_obj.previous_page_number }}">{% trans "Previous" %}</a>
+    {% endif %}
+    <span class="muted">{% trans "Page" %} {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+      <a href="?q={{ query }}&page={{ page_obj.next_page_number }}">{% trans "Next" %}</a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

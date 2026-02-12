@@ -1,0 +1,36 @@
+[
+  {
+    "asset_code": "LOK.ODA.001",
+    "asset_name": "Room 101",
+    "parent_asset_code": null,
+    "asset_type_code": "LOK",
+    "asset_status_code": "K",
+    "asset_group_code": "ODA",
+    "section_code": "001.001.001.003",
+    "cost_center_code": "001.001.001",
+    "business_unit_code": "001.001",
+    "brand": "",
+    "model": "",
+    "serial_number": "",
+    "is_mobile_equipment": false,
+    "default_work_type": "",
+    "updated_at": "2026-02-11T08:00:00Z"
+  },
+  {
+    "asset_code": "E.CLIMA.001",
+    "asset_name": "AC Unit",
+    "parent_asset_code": "LOK.ODA.001",
+    "asset_type_code": "E",
+    "asset_status_code": "K",
+    "asset_group_code": "ODA",
+    "section_code": "001.001.001.003",
+    "cost_center_code": "001.001.001",
+    "business_unit_code": "001.001",
+    "brand": "Generic",
+    "model": "G-100",
+    "serial_number": "SN-001",
+    "is_mobile_equipment": false,
+    "default_work_type": "",
+    "updated_at": "2026-02-11T08:05:00Z"
+  }
+]

@@ -1,0 +1,55 @@
+{% extends "webui/base.html" %}
+{% load i18n %}
+{% block content %}
+<div class="card">
+  <h1>{% trans "Audit Log" %}</h1>
+  <p class="muted">{% trans "Trace critical operations across web and API." %}</p>
+  <p><a href="{% url 'webui:audit-log-export' %}?{{ request.GET.urlencode }}">{% trans "Export CSV" %}</a></p>
+  <form method="get"
+        class="filter-grid"
+        hx-get="{% url 'webui:audit-log' %}"
+        hx-target="#audit-log-content"
+        hx-trigger="change, keyup delay:350ms from:#audit-search, keyup delay:350ms from:#audit-user">
+    <div>
+      <input id="audit-search" name="q" value="{{ query }}" placeholder="{% trans 'message, entity id, path, action' %}" aria-label="{% trans 'Search' %}" />
+    </div>
+    <div>
+      <label for="audit-action">{% trans "Action" %}</label>
+      <select id="audit-action" name="action">
+        <option value="">{% trans "All" %}</option>
+        {% for value in action_choices %}
+        <option value="{{ value }}" {% if selected_action == value %}selected{% endif %}>{{ value }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label for="audit-entity">{% trans "Entity Type" %}</label>
+      <select id="audit-entity" name="entity_type">
+        <option value="">{% trans "All" %}</option>
+        {% for value in entity_type_choices %}
+        <option value="{{ value }}" {% if selected_entity_type == value %}selected{% endif %}>{{ value }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label for="audit-status">{% trans "Status" %}</label>
+      <select id="audit-status" name="status">
+        <option value="">{% trans "All" %}</option>
+        {% for value, label in status_choices %}
+        <option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label for="audit-user">{% trans "User" %}</label>
+      <input id="audit-user" name="user" value="{{ selected_user }}" placeholder="{% trans 'username' %}" />
+    </div>
+    <div class="actions">
+      <button type="submit">{% trans "Filter" %}</button>
+    </div>
+  </form>
+</div>
+<div id="audit-log-content">
+  {% include "webui/partials/audit_log_content.html" %}
+</div>
+{% endblock %}

@@ -1,0 +1,19 @@
+{% load i18n %}
+{% if can_manage_risks %}
+<form method="post"
+      hx-post="{% url 'webui:risk-status-update' risk.id %}"
+      hx-target="#risk-status-{{ risk.id }}"
+      hx-swap="innerHTML"
+      class="actions">
+  {% csrf_token %}
+  <input type="hidden" name="origin" value="{{ origin|default:'detail' }}" />
+  <select name="status">
+    {% for value, label in risk_status_choices %}
+      <option value="{{ value }}" {% if risk.status == value %}selected{% endif %}>{{ label }}</option>
+    {% endfor %}
+  </select>
+  <button type="submit">{% trans "Save" %}</button>
+</form>
+{% else %}
+<span class="badge">{{ risk.get_status_display }}</span>
+{% endif %}

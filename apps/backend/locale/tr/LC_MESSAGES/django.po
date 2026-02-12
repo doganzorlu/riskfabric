@@ -1,0 +1,1475 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: riskfabric 1.0\n"
+"POT-Creation-Date: 2026-02-11 00:00+0000\n"
+"PO-Revision-Date: 2026-02-11 00:00+0000\n"
+"Last-Translator: RiskFabric Team\n"
+"Language-Team: Turkish\n"
+"Language: tr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "RiskFabric"
+msgstr "RiskFabric"
+
+msgid "Dashboard"
+msgstr "Panel"
+
+msgid "Assets"
+msgstr "Varlıklar"
+
+msgid "Risks"
+msgstr "Riskler"
+
+msgid "Location Risks"
+msgstr "Lokasyon Riskleri"
+
+msgid "Location Tree"
+msgstr "Lokasyon Ağacı"
+
+msgid "EAM Sync"
+msgstr "EAM Senkronizasyonu"
+
+msgid "Admin Panel"
+msgstr "Yönetim Paneli"
+
+msgid "Logout"
+msgstr "Çıkış"
+
+msgid "Language"
+msgstr "Dil"
+
+msgid "RiskFabric Login"
+msgstr "RiskFabric Giriş"
+
+msgid "Login"
+msgstr "Giriş"
+
+msgid "Use this portal for day-to-day risk operations. Admin users can also access the Django admin panel."
+msgstr "Bu portalı günlük risk operasyonları için kullanın. Yönetici kullanıcılar Django yönetim paneline de erişebilir."
+
+msgid "All Risks"
+msgstr "Tüm Riskler"
+
+msgid "Open Risks"
+msgstr "Açık Riskler"
+
+msgid "Treatments"
+msgstr "Aksiyonlar"
+
+msgid "Scoring Methods"
+msgstr "Skorlama Yöntemleri"
+
+msgid "Last EAM Sync"
+msgstr "Son EAM Senkronizasyonu"
+
+msgid "Status"
+msgstr "Durum"
+
+msgid "Plugin"
+msgstr "Eklenti"
+
+msgid "At"
+msgstr "Zaman"
+
+msgid "No sync run yet."
+msgstr "Henüz senkronizasyon çalışması yok."
+
+msgid "Excel metadata is fully shown below, including location hierarchy fields."
+msgstr "Aşağıda lokasyon hiyerarşi alanları dahil olmak üzere Excel metaverisi tamamen gösterilmektedir."
+
+msgid "Code"
+msgstr "Kod"
+
+msgid "Name"
+msgstr "Ad"
+
+msgid "Business Unit"
+msgstr "İşletme"
+
+msgid "Cost Center"
+msgstr "Sarfyeri"
+
+msgid "Section"
+msgstr "Kısım"
+
+msgid "Parent"
+msgstr "Üst"
+
+msgid "Type"
+msgstr "Tür"
+
+msgid "Group"
+msgstr "Grup"
+
+msgid "No assets found."
+msgstr "Varlık bulunamadı."
+
+msgid "Run Sync"
+msgstr "Senkronizasyonu Çalıştır"
+
+msgid "Recent Sync Runs"
+msgstr "Son Senkronizasyon Çalışmaları"
+
+msgid "Direction"
+msgstr "Yön"
+
+msgid "Created"
+msgstr "Oluşturulma"
+
+msgid "No sync runs yet."
+msgstr "Henüz senkronizasyon çalışması yok."
+
+msgid "All"
+msgstr "Tümü"
+
+msgid "Apply Filter"
+msgstr "Filtreyi Uygula"
+
+msgid "Risk Distribution by Section"
+msgstr "Kısıma Göre Risk Dağılımı"
+
+msgid "Total Risks"
+msgstr "Toplam Risk"
+
+msgid "No risk distribution data."
+msgstr "Risk dağılım verisi yok."
+
+msgid "Title"
+msgstr "Başlık"
+
+msgid "Primary Asset"
+msgstr "Birincil Varlık"
+
+msgid "Asset Type"
+msgstr "Varlık Türü"
+
+msgid "No risks for selected location filters."
+msgstr "Seçilen lokasyon filtreleri için risk yok."
+
+msgid "Location and Asset Tree"
+msgstr "Lokasyon ve Varlık Ağacı"
+
+msgid "Tree view for Business Unit -> Cost Center -> Section -> Asset with risk counters."
+msgstr "Risk sayaçlarıyla İşletme -> Sarfyeri -> Kısım -> Varlık ağaç görünümü."
+
+msgid "Total"
+msgstr "Toplam"
+
+msgid "Open"
+msgstr "Açık"
+
+msgid "No sections."
+msgstr "Kısım yok."
+
+msgid "No cost centers."
+msgstr "Sarfyeri yok."
+
+msgid "No business units found."
+msgstr "İşletme bulunamadı."
+
+msgid "Create Risk"
+msgstr "Risk Oluştur"
+
+msgid "Apply Scoring Method"
+msgstr "Skorlama Yöntemi Uygula"
+
+msgid "Apply Scoring"
+msgstr "Skorlamayı Uygula"
+
+msgid "Add Treatment"
+msgstr "Aksiyon Ekle"
+
+msgid "Add Review"
+msgstr "Gözden Geçirme Ekle"
+
+msgid "Risk List"
+msgstr "Risk Listesi"
+
+msgid "Scoring Method"
+msgstr "Skorlama Yöntemi"
+
+msgid "Scores"
+msgstr "Skorlar"
+
+msgid "Latest Review"
+msgstr "Son Gözden Geçirme"
+
+msgid "No risks found."
+msgstr "Risk bulunamadı."
+
+msgid "Risk created: %(title)s"
+msgstr "Risk oluşturuldu: %(title)s"
+
+msgid "Please fix risk form errors."
+msgstr "Lütfen risk formundaki hataları düzeltin."
+
+msgid "Scoring method applied for risk #%(risk_id)s."
+msgstr "#%(risk_id)s riski için skorlama yöntemi uygulandı."
+
+msgid "Please fix scoring form errors."
+msgstr "Lütfen skorlama formu hatalarını düzeltin."
+
+msgid "Treatment added: %(title)s"
+msgstr "Aksiyon eklendi: %(title)s"
+
+msgid "Please fix treatment form errors."
+msgstr "Lütfen aksiyon formu hatalarını düzeltin."
+
+msgid "Review added for risk #%(risk_id)s."
+msgstr "#%(risk_id)s riski için gözden geçirme eklendi."
+
+msgid "Please fix review form errors."
+msgstr "Lütfen gözden geçirme formu hatalarını düzeltin."
+
+msgid "Sync completed (%(plugin)s:%(version)s)"
+msgstr "Senkronizasyon tamamlandı (%(plugin)s:%(version)s)"
+
+msgid "Sync failed (%(plugin)s:%(version)s): %(message)s"
+msgstr "Senkronizasyon başarısız (%(plugin)s:%(version)s): %(message)s"
+
+msgid "Please fix sync form errors."
+msgstr "Lütfen senkronizasyon formu hatalarını düzeltin."
+
+msgid "Action"
+msgstr "Eylem"
+
+msgid "Actions"
+msgstr "İşlemler"
+
+msgid "Active"
+msgstr "Aktif"
+
+msgid "Active Exceptions"
+msgstr "Aktif İstisnalar"
+
+msgid "Actor"
+msgstr "Aktör"
+
+msgid "Apply Bulk Update"
+msgstr "Toplu Güncellemeyi Uygula"
+
+msgid "Approval History"
+msgstr "Onay Geçmişi"
+
+msgid "Approval Request"
+msgstr "Onay Talebi"
+
+msgid "Approval Workflow"
+msgstr "Onay Akışı"
+
+msgid "Asset"
+msgstr "Varlık"
+
+msgid "Asset Dependencies"
+msgstr "Varlık Bağımlılıkları"
+
+msgid "Audit Log"
+msgstr "Denetim Kaydı"
+
+msgid "Bulk Update"
+msgstr "Toplu Güncelleme"
+
+msgid "Cancel"
+msgstr "İptal"
+
+msgid "Category"
+msgstr "Kategori"
+
+msgid "Clear Due Date"
+msgstr "Bitiş Tarihini Temizle"
+
+msgid "Clear Owner"
+msgstr "Sorumluyu Temizle"
+
+msgid "Comments"
+msgstr "Yorumlar"
+
+msgid "Configure automated report deliveries."
+msgstr "Otomatik rapor gönderimlerini yapılandırın."
+
+msgid "Configured Methods"
+msgstr "Tanımlı Yöntemler"
+
+msgid "Control"
+msgstr "Kontrol"
+
+msgid "Controls"
+msgstr "Kontroller"
+
+msgid "Controls Library"
+msgstr "Kontrol Kütüphanesi"
+
+msgid "Created At"
+msgstr "Oluşturulma Zamanı"
+
+msgid "Current Links"
+msgstr "Mevcut Bağlantılar"
+
+msgid "Decide Approval"
+msgstr "Onay Kararı"
+
+msgid "Decided At"
+msgstr "Karar Zamanı"
+
+msgid "Decided By"
+msgstr "Karar Veren"
+
+msgid "Decision"
+msgstr "Karar"
+
+msgid "Default"
+msgstr "Varsayılan"
+
+msgid "Define and maintain risk scoring formulas used by risks."
+msgstr "Risklerin kullandığı skorlama formüllerini tanımlayın ve yönetin."
+
+msgid "Delete"
+msgstr "Sil"
+
+msgid "Delete this control?"
+msgstr "Bu kontrol silinsin mi?"
+
+msgid "Delete this exception?"
+msgstr "Bu istisna silinsin mi?"
+
+msgid "Delete this issue?"
+msgstr "Bu sorun silinsin mi?"
+
+msgid "Delete this method?"
+msgstr "Bu yöntem silinsin mi?"
+
+msgid "Delete this schedule?"
+msgstr "Bu plan silinsin mi?"
+
+msgid "Dependencies are limited to assets linked to this risk."
+msgstr "Bağımlılıklar bu riske bağlı varlıklarla sınırlıdır."
+
+msgid "Dependency Edges"
+msgstr "Bağımlılık Kenarları"
+
+msgid "Dependency Graph"
+msgstr "Bağımlılık Grafiği"
+
+msgid "Due Date"
+msgstr "Bitiş Tarihi"
+
+msgid "Due Date From"
+msgstr "Bitiş Tarihi Başlangıç"
+
+msgid "Due Date To"
+msgstr "Bitiş Tarihi Bitiş"
+
+msgid "Edit"
+msgstr "Düzenle"
+
+msgid "Edit Control"
+msgstr "Kontrolü Düzenle"
+
+msgid "Edit Exception"
+msgstr "İstisnayı Düzenle"
+
+msgid "Edit Issue"
+msgstr "Sorunu Düzenle"
+
+msgid "Edit Risk"
+msgstr "Riski Düzenle"
+
+msgid "Edit Schedule"
+msgstr "Planı Düzenle"
+
+msgid "Edit Scoring Method"
+msgstr "Skorlama Yöntemini Düzenle"
+
+msgid "End"
+msgstr "Bitiş"
+
+msgid "Entity"
+msgstr "Varlık"
+
+msgid "Entity Type"
+msgstr "Varlık Türü"
+
+msgid "Exceptions"
+msgstr "İstisnalar"
+
+msgid "Export CSV"
+msgstr "CSV Dışa Aktar"
+
+msgid "Filter"
+msgstr "Süz"
+
+msgid "Focus on operational items requiring action."
+msgstr "Aksiyon gerektiren operasyonel öğelere odaklanın."
+
+msgid "Frequency"
+msgstr "Frekans"
+
+msgid "ID"
+msgstr "ID"
+
+msgid "Impact"
+msgstr "Etki"
+
+msgid "Impact \\ Likelihood"
+msgstr "Etki \\ Olasılık"
+
+msgid "Impact vs Likelihood distribution."
+msgstr "Etki ve Olasılık dağılımı."
+
+msgid "Inactive"
+msgstr "Pasif"
+
+msgid "Inherent"
+msgstr "Doğal"
+
+msgid "Issues"
+msgstr "Sorunlar"
+
+msgid "Jump to common operational tasks."
+msgstr "Sık yapılan operasyonlara geçin."
+
+msgid "Last Run"
+msgstr "Son Çalışma"
+
+msgid "Last Scheduled Report"
+msgstr "Son Zamanlanmış Rapor"
+
+msgid "Likelihood"
+msgstr "Olasılık"
+
+msgid "Linked Assets"
+msgstr "Bağlı Varlıklar"
+
+msgid "Loading..."
+msgstr "Yükleniyor..."
+
+msgid "Location"
+msgstr "Lokasyon"
+
+msgid "Mark All Read"
+msgstr "Tümünü Okundu Yap"
+
+msgid "Mark Read"
+msgstr "Okundu Yap"
+
+msgid "Message"
+msgstr "Mesaj"
+
+msgid "New Control"
+msgstr "Yeni Kontrol"
+
+msgid "New Exception"
+msgstr "Yeni İstisna"
+
+msgid "New Issue"
+msgstr "Yeni Sorun"
+
+msgid "New Method"
+msgstr "Yeni Yöntem"
+
+msgid "New Risk"
+msgstr "Yeni Risk"
+
+msgid "New Schedule"
+msgstr "Yeni Plan"
+
+msgid "New Scoring Method"
+msgstr "Yeni Skorlama Yöntemi"
+
+msgid "New Sync Run"
+msgstr "Yeni Senkronizasyon Çalışması"
+
+msgid "Next"
+msgstr "Sonraki"
+
+msgid "Next Review Date"
+msgstr "Sonraki Gözden Geçirme Tarihi"
+
+msgid "No"
+msgstr "Hayır"
+
+msgid "No approvals yet."
+msgstr "Henüz onay yok."
+
+msgid "No assets."
+msgstr "Varlık yok."
+
+msgid "No audit events found."
+msgstr "Denetim kaydı bulunamadı."
+
+msgid "No controls found."
+msgstr "Kontrol bulunamadı."
+
+msgid "No dependencies between linked assets."
+msgstr "Bağlı varlıklar arasında bağımlılık yok."
+
+msgid "No exceptions found."
+msgstr "İstisna bulunamadı."
+
+msgid "No issues found."
+msgstr "Sorun bulunamadı."
+
+msgid "No linked assets found."
+msgstr "Bağlı varlık bulunamadı."
+
+msgid "No linked assets."
+msgstr "Bağlı varlık yok."
+
+msgid "No notifications."
+msgstr "Bildirim yok."
+
+msgid "No overdue treatments."
+msgstr "Gecikmiş aksiyon yok."
+
+msgid "No report run yet."
+msgstr "Henüz rapor çalıştırılmadı."
+
+msgid "No report runs yet."
+msgstr "Henüz rapor çalışması yok."
+
+msgid "No reviews yet."
+msgstr "Henüz gözden geçirme yok."
+
+msgid "No schedules found."
+msgstr "Plan bulunamadı."
+
+msgid "No scoring history yet."
+msgstr "Skorlama geçmişi yok."
+
+msgid "No scoring methods defined yet."
+msgstr "Skorlama yöntemi tanımlanmadı."
+
+msgid "No treatments yet."
+msgstr "Henüz aksiyon yok."
+
+msgid "No upcoming reviews in selected window."
+msgstr "Seçilen aralıkta yaklaşan gözden geçirme yok."
+
+msgid "Notifications"
+msgstr "Bildirimler"
+
+msgid "Open Issues"
+msgstr "Açık Sorunlar"
+
+msgid "Open Notifications"
+msgstr "Açık Bildirimler"
+
+msgid "Open Work Queue"
+msgstr "İş Kuyruğunu Aç"
+
+msgid "Overdue Treatments"
+msgstr "Gecikmiş Aksiyonlar"
+
+msgid "Owner"
+msgstr "Sorumlu"
+
+msgid "Page"
+msgstr "Sayfa"
+
+msgid "Path"
+msgstr "Yol"
+
+msgid "Pending Approvals"
+msgstr "Bekleyen Onaylar"
+
+msgid "Previous"
+msgstr "Önceki"
+
+msgid "Primary"
+msgstr "Birincil"
+
+msgid "Primary asset is always linked. Select additional assets impacted by this risk."
+msgstr "Birincil varlık her zaman bağlıdır. Bu riskten etkilenen ek varlıkları seçin."
+
+msgid "Progress"
+msgstr "İlerleme"
+
+msgid "Quick Links"
+msgstr "Kısayollar"
+
+msgid "Read"
+msgstr "Okundu"
+
+msgid "Read only"
+msgstr "Salt okunur"
+
+msgid "Recent Runs"
+msgstr "Son Çalışmalar"
+
+msgid "Report"
+msgstr "Rapor"
+
+msgid "Request Approval"
+msgstr "Onay İste"
+
+msgid "Requested At"
+msgstr "Talep Zamanı"
+
+msgid "Requested By"
+msgstr "Talep Eden"
+
+msgid "Residual"
+msgstr "Artık"
+
+msgid "Reusable controls and mitigations."
+msgstr "Tekrar kullanılabilir kontroller ve azaltımlar."
+
+msgid "Review Window (days)"
+msgstr "Gözden Geçirme Penceresi (gün)"
+
+msgid "Reviewer"
+msgstr "Gözden Geçiren"
+
+msgid "Reviews"
+msgstr "Gözden Geçirmeler"
+
+msgid "Risk"
+msgstr "Risk"
+
+msgid "Risk Detail"
+msgstr "Risk Detayı"
+
+msgid "Risk Heatmap"
+msgstr "Risk Isı Haritası"
+
+msgid "Risk Register"
+msgstr "Risk Kaydı"
+
+msgid "Risks by Status"
+msgstr "Duruma Göre Riskler"
+
+msgid "Save"
+msgstr "Kaydet"
+
+msgid "Save Changes"
+msgstr "Değişiklikleri Kaydet"
+
+msgid "Save Control"
+msgstr "Kontrolü Kaydet"
+
+msgid "Save Decision"
+msgstr "Kararı Kaydet"
+
+msgid "Save Exception"
+msgstr "İstisnayı Kaydet"
+
+msgid "Save Issue"
+msgstr "Sorunu Kaydet"
+
+msgid "Save Method"
+msgstr "Yöntemi Kaydet"
+
+msgid "Save Risk"
+msgstr "Riski Kaydet"
+
+msgid "Save Schedule"
+msgstr "Planı Kaydet"
+
+msgid "Schedule"
+msgstr "Plan"
+
+msgid "Scheduled Reports"
+msgstr "Zamanlanmış Raporlar"
+
+msgid "Schedules"
+msgstr "Planlar"
+
+msgid "Scoring History"
+msgstr "Skorlama Geçmişi"
+
+msgid "Select risks above to apply changes."
+msgstr "Değişiklikleri uygulamak için yukarıdaki riskleri seçin."
+
+msgid "Showing all assets"
+msgstr "Tüm varlıklar gösteriliyor"
+
+msgid "Source"
+msgstr "Kaynak"
+
+msgid "Start"
+msgstr "Başlangıç"
+
+msgid "Strength"
+msgstr "Güç"
+
+msgid "Target"
+msgstr "Hedef"
+
+msgid "Time"
+msgstr "Saat"
+
+msgid "Top Business Units by Risk Count"
+msgstr "Risk Sayısına Göre En Çok İşletmeler"
+
+msgid "Trace critical operations across web and API."
+msgstr "Web ve API genelindeki kritik işlemleri izleyin."
+
+msgid "Track approved exceptions and temporary risk acceptances."
+msgstr "Onaylı istisnaları ve geçici risk kabullerini takip edin."
+
+msgid "Track operational issues linked to risks."
+msgstr "Risklerle bağlantılı operasyonel sorunları takip edin."
+
+msgid "Treatment"
+msgstr "Aksiyon"
+
+msgid "Treatment Owner"
+msgstr "Aksiyon Sorumlusu"
+
+msgid "Treatment Status"
+msgstr "Aksiyon Durumu"
+
+msgid "Unread Notifications"
+msgstr "Okunmamış Bildirimler"
+
+msgid "Upcoming Reviews (7d)"
+msgstr "Yaklaşan Gözden Geçirmeler (7g)"
+
+msgid "Update"
+msgstr "Güncelle"
+
+msgid "Update Linked Assets"
+msgstr "Bağlı Varlıkları Güncelle"
+
+msgid "User"
+msgstr "Kullanıcı"
+
+msgid "View Exceptions"
+msgstr "İstisnaları Gör"
+
+msgid "View Issues"
+msgstr "Sorunları Gör"
+
+msgid "When"
+msgstr "Zaman"
+
+msgid "Window"
+msgstr "Pencere"
+
+msgid "Work Queue"
+msgstr "İş Kuyruğu"
+
+msgid "Yes"
+msgstr "Evet"
+
+msgid "You do not have permission to add reviews."
+msgstr "Gözden geçirme ekleme yetkiniz yok."
+
+msgid "You do not have permission to apply scoring."
+msgstr "Skorlama uygulama yetkiniz yok."
+
+msgid "You do not have permission to create risks."
+msgstr "Risk oluşturma yetkiniz yok."
+
+msgid "You do not have permission to decide approvals."
+msgstr "Onay karar verme yetkiniz yok."
+
+msgid "You do not have permission to manage controls."
+msgstr "Kontrolleri yönetme yetkiniz yok."
+
+msgid "You do not have permission to manage exceptions."
+msgstr "İstisnaları yönetme yetkiniz yok."
+
+msgid "You do not have permission to manage issues."
+msgstr "Sorunları yönetme yetkiniz yok."
+
+msgid "You do not have permission to manage report schedules."
+msgstr "Rapor planlarını yönetme yetkiniz yok."
+
+msgid "You do not have permission to manage scoring methods."
+msgstr "Skorlama yöntemlerini yönetme yetkiniz yok."
+
+msgid "You do not have permission to manage treatments."
+msgstr "Aksiyonları yönetme yetkiniz yok."
+
+msgid "You do not have permission to request approval."
+msgstr "Onay isteme yetkiniz yok."
+
+msgid "You do not have permission to update linked assets."
+msgstr "Bağlı varlıkları güncelleme yetkiniz yok."
+
+msgid "You do not have permission to update risks."
+msgstr "Riskleri güncelleme yetkiniz yok."
+
+msgid "assets match"
+msgstr "varlık eşleşti"
+
+msgid "events listed"
+msgstr "kayıt listelendi"
+
+msgid "items"
+msgstr "öğe"
+
+msgid "risks listed"
+msgstr "risk listelendi"
+
+msgid "Third-Party Vendors"
+msgstr "Üçüncü Taraf Tedarikçiler"
+
+msgid "Third-Party Risks"
+msgstr "Üçüncü Taraf Riskler"
+
+msgid "Search Vendors"
+msgstr "Tedarikçi Ara"
+
+msgid "New Vendor"
+msgstr "Yeni Tedarikçi"
+
+msgid "Edit Vendor"
+msgstr "Tedarikçiyi Düzenle"
+
+msgid "Save Vendor"
+msgstr "Tedarikçiyi Kaydet"
+
+msgid "Vendors"
+msgstr "Tedarikçiler"
+
+msgid "Criticality"
+msgstr "Kritiklik"
+
+msgid "Delete this vendor?"
+msgstr "Bu tedarikçi silinsin mi?"
+
+msgid "No vendors found."
+msgstr "Tedarikçi bulunamadı."
+
+msgid "Search Third-Party Risks"
+msgstr "Üçüncü Taraf Risk Ara"
+
+msgid "New Third-Party Risk"
+msgstr "Yeni Üçüncü Taraf Risk"
+
+msgid "Edit Third-Party Risk"
+msgstr "Üçüncü Taraf Riski Düzenle"
+
+msgid "Save Third-Party Risk"
+msgstr "Üçüncü Taraf Riski Kaydet"
+
+msgid "Delete this third-party risk?"
+msgstr "Bu üçüncü taraf risk silinsin mi?"
+
+msgid "No third-party risks found."
+msgstr "Üçüncü taraf risk bulunamadı."
+
+msgid "You do not have permission to manage third-party vendors."
+msgstr "Üçüncü taraf tedarikçileri yönetme yetkiniz yok."
+
+msgid "You do not have permission to manage third-party risks."
+msgstr "Üçüncü taraf riskleri yönetme yetkiniz yok."
+
+msgid "Please fix vendor form errors."
+msgstr "Lütfen tedarikçi formu hatalarını düzeltin."
+
+msgid "Please fix third-party risk form errors."
+msgstr "Lütfen üçüncü taraf risk formu hatalarını düzeltin."
+
+msgid "Vendor saved."
+msgstr "Tedarikçi kaydedildi."
+
+msgid "Vendor deleted."
+msgstr "Tedarikçi silindi."
+
+msgid "Third-party risk saved."
+msgstr "Üçüncü taraf risk kaydedildi."
+
+msgid "Third-party risk deleted."
+msgstr "Üçüncü taraf risk silindi."
+
+msgid "Policies & Standards"
+msgstr "Politikalar ve Standartlar"
+
+msgid "Policy Mappings"
+msgstr "Politika Eşleştirmeleri"
+
+msgid "Search Policies"
+msgstr "Politika Ara"
+
+msgid "New Policy"
+msgstr "Yeni Politika"
+
+msgid "Edit Policy"
+msgstr "Politikayı Düzenle"
+
+msgid "Save Policy"
+msgstr "Politikayı Kaydet"
+
+msgid "Policies"
+msgstr "Politikalar"
+
+msgid "Effective Date"
+msgstr "Yürürlük Tarihi"
+
+msgid "Review Date"
+msgstr "Gözden Geçirme Tarihi"
+
+msgid "Delete this policy?"
+msgstr "Bu politika silinsin mi?"
+
+msgid "No policies found."
+msgstr "Politika bulunamadı."
+
+msgid "Policy -> Control"
+msgstr "Politika -> Kontrol"
+
+msgid "Policy -> Risk"
+msgstr "Politika -> Risk"
+
+msgid "Policy"
+msgstr "Politika"
+
+msgid "Notes"
+msgstr "Notlar"
+
+msgid "Save Mapping"
+msgstr "Eşleştirmeyi Kaydet"
+
+msgid "Delete this mapping?"
+msgstr "Bu eşleştirme silinsin mi?"
+
+msgid "No control mappings found."
+msgstr "Kontrol eşleştirmesi bulunamadı."
+
+msgid "No risk mappings found."
+msgstr "Risk eşleştirmesi bulunamadı."
+
+msgid "Search Control Mappings"
+msgstr "Kontrol Eşleştirmesi Ara"
+
+msgid "Search Risk Mappings"
+msgstr "Risk Eşleştirmesi Ara"
+
+msgid "You do not have permission to manage policies."
+msgstr "Politikaları yönetme yetkiniz yok."
+
+msgid "Please fix policy form errors."
+msgstr "Lütfen politika formu hatalarını düzeltin."
+
+msgid "Policy saved."
+msgstr "Politika kaydedildi."
+
+msgid "Policy deleted."
+msgstr "Politika silindi."
+
+msgid "You do not have permission to manage policy mappings."
+msgstr "Politika eşleştirmelerini yönetme yetkiniz yok."
+
+msgid "Control mapping saved."
+msgstr "Kontrol eşleştirmesi kaydedildi."
+
+msgid "Risk mapping saved."
+msgstr "Risk eşleştirmesi kaydedildi."
+
+msgid "Control mapping deleted."
+msgstr "Kontrol eşleştirmesi silindi."
+
+msgid "Risk mapping deleted."
+msgstr "Risk eşleştirmesi silindi."
+
+msgid "Control Testing"
+msgstr "Kontrol Testi"
+
+msgid "Compliance"
+msgstr "Uyumluluk"
+
+msgid "System Parameters"
+msgstr "Sistem Parametreleri"
+
+msgid "Account"
+msgstr "Hesap"
+
+msgid "Assessments"
+msgstr "Değerlendirmeler"
+
+msgid "Plan and track internal or external assessments."
+msgstr "İç veya dış değerlendirmeleri planlayın ve takip edin."
+
+msgid "Search Assessments"
+msgstr "Değerlendirme Ara"
+
+msgid "Title, owner, status"
+msgstr "Başlık, sorumlu, durum"
+
+msgid "New Assessment"
+msgstr "Yeni Değerlendirme"
+
+msgid "Edit Assessment"
+msgstr "Değerlendirmeyi Düzenle"
+
+msgid "Save Assessment"
+msgstr "Değerlendirmeyi Kaydet"
+
+msgid "Assessment Register"
+msgstr "Değerlendirme Envanteri"
+
+msgid "Delete this assessment?"
+msgstr "Bu değerlendirme silinsin mi?"
+
+msgid "No assessments found."
+msgstr "Değerlendirme bulunamadı."
+
+msgid "You do not have permission to manage assessments."
+msgstr "Değerlendirmeleri yönetme yetkiniz yok."
+
+msgid "Assessment saved."
+msgstr "Değerlendirme kaydedildi."
+
+msgid "Assessment deleted."
+msgstr "Değerlendirme silindi."
+
+msgid "Please fix assessment form errors."
+msgstr "Lütfen değerlendirme formu hatalarını düzeltin."
+
+msgid "Vulnerabilities"
+msgstr "Zafiyetler"
+
+msgid "Track vulnerabilities and relate them to assets or risks."
+msgstr "Zafiyetleri takip edin ve varlıklar veya risklerle ilişkilendirin."
+
+msgid "Search Vulnerabilities"
+msgstr "Zafiyet Ara"
+
+msgid "Title, severity, status"
+msgstr "Başlık, şiddet, durum"
+
+msgid "New Vulnerability"
+msgstr "Yeni Zafiyet"
+
+msgid "Edit Vulnerability"
+msgstr "Zafiyeti Düzenle"
+
+msgid "Save Vulnerability"
+msgstr "Zafiyeti Kaydet"
+
+msgid "Vulnerability Register"
+msgstr "Zafiyet Envanteri"
+
+msgid "Delete this vulnerability?"
+msgstr "Bu zafiyet silinsin mi?"
+
+msgid "No vulnerabilities found."
+msgstr "Zafiyet bulunamadı."
+
+msgid "You do not have permission to manage vulnerabilities."
+msgstr "Zafiyetleri yönetme yetkiniz yok."
+
+msgid "Vulnerability saved."
+msgstr "Zafiyet kaydedildi."
+
+msgid "Vulnerability deleted."
+msgstr "Zafiyet silindi."
+
+msgid "Please fix vulnerability form errors."
+msgstr "Lütfen zafiyet formu hatalarını düzeltin."
+
+msgid "Governance Programs"
+msgstr "Yönetişim Programları"
+
+msgid "Track governance initiatives and program objectives."
+msgstr "Yönetişim girişimlerini ve program hedeflerini takip edin."
+
+msgid "Search Governance Programs"
+msgstr "Yönetişim Programlarını Ara"
+
+msgid "Name, owner, status"
+msgstr "Ad, sorumlu, durum"
+
+msgid "New Program"
+msgstr "Yeni Program"
+
+msgid "Edit Program"
+msgstr "Programı Düzenle"
+
+msgid "Save Program"
+msgstr "Programı Kaydet"
+
+msgid "Programs"
+msgstr "Programlar"
+
+msgid "Delete this program?"
+msgstr "Bu program silinsin mi?"
+
+msgid "No programs found."
+msgstr "Program bulunamadı."
+
+msgid "You do not have permission to manage governance programs."
+msgstr "Yönetişim programlarını yönetme yetkiniz yok."
+
+msgid "Governance program saved."
+msgstr "Yönetişim programı kaydedildi."
+
+msgid "Governance program deleted."
+msgstr "Yönetişim programı silindi."
+
+msgid "Please fix governance program form errors."
+msgstr "Lütfen yönetişim programı formu hatalarını düzeltin."
+
+msgid "Compliance Frameworks"
+msgstr "Uyumluluk Çerçeveleri"
+
+msgid "Manage compliance frameworks and owners."
+msgstr "Uyumluluk çerçevelerini ve sorumluları yönetin."
+
+msgid "Search Compliance Frameworks"
+msgstr "Uyumluluk Çerçevesi Ara"
+
+msgid "New Framework"
+msgstr "Yeni Çerçeve"
+
+msgid "Edit Framework"
+msgstr "Çerçeveyi Düzenle"
+
+msgid "Save Framework"
+msgstr "Çerçeveyi Kaydet"
+
+msgid "Frameworks"
+msgstr "Çerçeveler"
+
+msgid "Delete this framework?"
+msgstr "Bu çerçeve silinsin mi?"
+
+msgid "No frameworks found."
+msgstr "Çerçeve bulunamadı."
+
+msgid "You do not have permission to manage compliance frameworks."
+msgstr "Uyumluluk çerçevelerini yönetme yetkiniz yok."
+
+msgid "Compliance framework saved."
+msgstr "Uyumluluk çerçevesi kaydedildi."
+
+msgid "Compliance framework deleted."
+msgstr "Uyumluluk çerçevesi silindi."
+
+msgid "Please fix compliance framework form errors."
+msgstr "Lütfen uyumluluk çerçevesi formu hatalarını düzeltin."
+
+msgid "Compliance Requirements"
+msgstr "Uyumluluk Gereksinimleri"
+
+msgid "Track compliance requirements and evidence."
+msgstr "Uyumluluk gereksinimlerini ve kanıtları takip edin."
+
+msgid "Search Requirements"
+msgstr "Gereksinim Ara"
+
+msgid "All Frameworks"
+msgstr "Tüm Çerçeveler"
+
+msgid "Filter by framework"
+msgstr "Çerçeveye göre filtrele"
+
+msgid "New Requirement"
+msgstr "Yeni Gereksinim"
+
+msgid "Edit Requirement"
+msgstr "Gereksinimi Düzenle"
+
+msgid "Save Requirement"
+msgstr "Gereksinimi Kaydet"
+
+msgid "Requirements"
+msgstr "Gereksinimler"
+
+msgid "Delete this requirement?"
+msgstr "Bu gereksinim silinsin mi?"
+
+msgid "No requirements found."
+msgstr "Gereksinim bulunamadı."
+
+msgid "You do not have permission to manage compliance requirements."
+msgstr "Uyumluluk gereksinimlerini yönetme yetkiniz yok."
+
+msgid "Compliance requirement saved."
+msgstr "Uyumluluk gereksinimi kaydedildi."
+
+msgid "Compliance requirement deleted."
+msgstr "Uyumluluk gereksinimi silindi."
+
+msgid "Please fix compliance requirement form errors."
+msgstr "Lütfen uyumluluk gereksinimi formu hatalarını düzeltin."
+
+msgid "Reports"
+msgstr "Raporlar"
+
+msgid "Reports Overview"
+msgstr "Raporlara Genel Bakış"
+
+msgid "Standard reporting packs and schedules."
+msgstr "Standart raporlama paketleri ve planları."
+
+msgid "Assessment Reports"
+msgstr "Değerlendirme Raporları"
+
+msgid "Vulnerability Reports"
+msgstr "Zafiyet Raporları"
+
+msgid "Compliance Reports"
+msgstr "Uyumluluk Raporları"
+
+msgid "Status overview for assessments."
+msgstr "Değerlendirmeler için durum özeti."
+
+msgid "Severity and status tracking."
+msgstr "Şiddet ve durum takibi."
+
+msgid "Framework requirement coverage."
+msgstr "Çerçeve gereksinim kapsaması."
+
+msgid "Search Assessment Reports"
+msgstr "Değerlendirme Raporlarını Ara"
+
+msgid "Assessment Status Overview"
+msgstr "Değerlendirme Durum Özeti"
+
+msgid "Search Vulnerability Reports"
+msgstr "Zafiyet Raporlarını Ara"
+
+msgid "Vulnerability Status Overview"
+msgstr "Zafiyet Durum Özeti"
+
+msgid "Search Compliance Reports"
+msgstr "Uyumluluk Raporlarını Ara"
+
+msgid "Compliance Coverage Overview"
+msgstr "Uyumluluk Kapsam Özeti"
+
+msgid "View"
+msgstr "Görüntüle"
+
+msgid "Status Charts"
+msgstr "Durum Grafikleri"
+
+msgid "Risk Status Distribution"
+msgstr "Risk Durum Dağılımı"
+
+msgid "Vulnerability Status Distribution"
+msgstr "Zafiyet Durum Dağılımı"
+
+msgid "Vulnerability Severity Distribution"
+msgstr "Zafiyet Şiddet Dağılımı"
+
+msgid "Compliance Status Distribution"
+msgstr "Uyumluluk Durum Dağılımı"
+
+msgid "Unknown report export."
+msgstr "Bilinmeyen rapor dışa aktarma."
+
+msgid "You do not have permission to export compliance data."
+msgstr "Uyumluluk verilerini dışa aktarma yetkiniz yok."
+
+msgid "You do not have permission to view compliance data."
+msgstr "Uyumluluk verilerini görüntüleme yetkiniz yok."
+
+msgid "Optional additional assets impacted by this risk."
+msgstr "Bu riskten etkilenen ek varlıklar (isteğe bağlı)."
+
+msgid "Business unit, cost center, section, and asset type are inherited automatically from primary asset."
+msgstr "İşletme, Sarfyeri, Kısım ve Varlık Türü birincil varlıktan otomatik olarak alınır."
+
+msgid "Title cannot be empty."
+msgstr "Başlık boş olamaz."
+
+msgid "Owner is required when risk status is In Progress."
+msgstr "Risk durumu Devam Ediyor iken sorumlu zorunludur."
+
+msgid "Due date cannot be in the past unless risk is Closed."
+msgstr "Risk Kapalı değilse bitiş tarihi geçmişte olamaz."
+
+msgid "You do not have access to the selected primary asset."
+msgstr "Seçilen birincil varlığa erişiminiz yok."
+
+msgid "Primary asset is missing required context metadata: "
+msgstr "Birincil varlığın zorunlu bağlam bilgileri eksik: "
+
+msgid "You do not have access to one or more additional assets."
+msgstr "Bir veya daha fazla ek varlığa erişiminiz yok."
+
+msgid "Primary asset must not be duplicated in additional assets."
+msgstr "Birincil varlık ek varlıklar arasında tekrar edemez."
+
+msgid "Select additional assets linked to this risk."
+msgstr "Bu riskle ilişkili ek varlıkları seçin."
+
+msgid "You do not have access to one or more selected assets."
+msgstr "Seçilen varlıklardan bir veya daha fazlasına erişiminiz yok."
+
+msgid "You do not have access to the selected asset."
+msgstr "Seçilen varlığa erişiminiz yok."
+
+msgid "You do not have access to the selected risk."
+msgstr "Seçilen riske erişiminiz yok."
+
+msgid "In Progress"
+msgstr "Devam Ediyor"
+
+msgid "Closed"
+msgstr "Kapalı"
+
+msgid "Mitigated"
+msgstr "Azaltıldı"
+
+msgid "Accepted"
+msgstr "Kabul Edildi"
+
+msgid "Critical"
+msgstr "Kritik"
+
+msgid "High"
+msgstr "Yüksek"
+
+msgid "Medium"
+msgstr "Orta"
+
+msgid "Low"
+msgstr "Düşük"
+
+msgid "Compliant"
+msgstr "Uyumlu"
+
+msgid "Partially Compliant"
+msgstr "Kısmi Uyumlu"
+
+msgid "Non-Compliant"
+msgstr "Uyumsuz"
+
+msgid "Not Applicable"
+msgstr "Uygulanamaz"
+
+msgid "Unknown"
+msgstr "Bilinmiyor"
+
+msgid "Draft"
+msgstr "Taslak"
+
+msgid "Retired"
+msgstr "Emekli"
+
+msgid "In Review"
+msgstr "Gözden Geçirmede"
+
+msgid "Completed"
+msgstr "Tamamlandı"
+
+msgid "Cancelled"
+msgstr "İptal Edildi"
+
+msgid "Pending"
+msgstr "Beklemede"
+
+msgid "Rejected"
+msgstr "Reddedildi"
+
+msgid "Approved"
+msgstr "Onaylandı"
+
+msgid "Failed"
+msgstr "Başarısız"
+
+msgid "Success"
+msgstr "Başarılı"
+
+msgid "Plan recurring control tests and track effectiveness."
+msgstr "Periyodik kontrol testlerini planlayın ve etkinliği izleyin."
+
+msgid "Search Control Tests"
+msgstr "Kontrol Testleri Ara"
+
+msgid "Control name or owner"
+msgstr "Kontrol adı veya sorumlu"
+
+msgid "New Test Plan"
+msgstr "Yeni Test Planı"
+
+msgid "Edit Test Plan"
+msgstr "Test Planını Düzenle"
+
+msgid "Save Test Plan"
+msgstr "Test Planını Kaydet"
+
+msgid "Test Plans"
+msgstr "Test Planları"
+
+msgid "Latest Test"
+msgstr "Son Test"
+
+msgid "Effectiveness"
+msgstr "Etkinlik"
+
+msgid "View Runs"
+msgstr "Test Koşularını Gör"
+
+msgid "Delete this test plan?"
+msgstr "Bu test planı silinsin mi?"
+
+msgid "No test plans found."
+msgstr "Test planı bulunamadı."
+
+msgid "Control Test Runs"
+msgstr "Kontrol Test Koşuları"
+
+msgid "Track individual test executions for controls."
+msgstr "Kontroller için tekil test koşularını izleyin."
+
+msgid "Search Test Runs"
+msgstr "Test Koşularını Ara"
+
+msgid "Control, tester, result"
+msgstr "Kontrol, test eden, sonuç"
+
+msgid "All Plans"
+msgstr "Tüm Planlar"
+
+msgid "Filter by plan"
+msgstr "Plana göre filtrele"
+
+msgid "New Test Run"
+msgstr "Yeni Test Koşusu"
+
+msgid "Back to Test Plans"
+msgstr "Test Planlarına Dön"
+
+msgid "Edit Test Run"
+msgstr "Test Koşusunu Düzenle"
+
+msgid "Save Test Run"
+msgstr "Test Koşusunu Kaydet"
+
+msgid "Test Runs"
+msgstr "Test Koşuları"
+
+msgid "Tested At"
+msgstr "Test Tarihi"
+
+msgid "Tester"
+msgstr "Test Eden"
+
+msgid "Delete this test run?"
+msgstr "Bu test koşusu silinsin mi?"
+
+msgid "No test runs found."
+msgstr "Test koşusu bulunamadı."
+
+msgid "You do not have permission to manage control tests."
+msgstr "Kontrol testlerini yönetme yetkiniz yok."
+
+msgid "Test plan deleted."
+msgstr "Test planı silindi."
+
+msgid "Test plan saved."
+msgstr "Test planı kaydedildi."
+
+msgid "Please fix test plan form errors."
+msgstr "Lütfen test planı formu hatalarını düzeltin."
+
+msgid "You do not have permission to manage control test runs."
+msgstr "Kontrol test koşularını yönetme yetkiniz yok."
+
+msgid "Test run deleted."
+msgstr "Test koşusu silindi."
+
+msgid "Test run saved."
+msgstr "Test koşusu kaydedildi."
+
+msgid "Please fix test run form errors."
+msgstr "Lütfen test koşusu formu hatalarını düzeltin."

@@ -1,0 +1,139 @@
+{% load i18n %}
+<h2>{% trans "Asset Dependencies" %}</h2>
+<p class="muted">
+  {% trans "Dependencies are limited to assets linked to this risk." %}
+</p>
+
+<div class="card" style="margin-bottom: 12px;">
+  <h3>{% trans "Linked Assets" %}</h3>
+  <ul>
+    {% for asset in linked_assets %}
+      <li>
+        {{ asset.asset_code }} - {{ asset.asset_name }}
+        {% if asset.asset_type %}({{ asset.asset_type.code }}){% endif %}
+        {% if asset.id == risk.primary_asset_id %}<strong>{% trans "Primary" %}</strong>{% endif %}
+      </li>
+    {% empty %}
+      <li>{% trans "No linked assets." %}</li>
+    {% endfor %}
+  </ul>
+</div>
+
+<div class="card" style="margin-bottom: 12px;">
+  <h3>{% trans "Dependency Graph" %}</h3>
+  <svg id="dependency-graph" viewBox="0 0 900 480" width="100%" height="360" role="img" aria-label="Dependency graph">
+    <defs>
+      <linearGradient id="edgeGrad" x1="0" x2="1" y1="0" y2="0">
+        <stop offset="0%" stop-color="#0f5f94" />
+        <stop offset="100%" stop-color="#0b3756" />
+      </linearGradient>
+      <marker id="arrowHead" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+        <path d="M0,0 L8,3 L0,6 Z" fill="#0b3756"></path>
+      </marker>
+    </defs>
+    <rect x="0" y="0" width="900" height="480" fill="#f8fbff"></rect>
+    <g id="edges"></g>
+    <g id="nodes"></g>
+  </svg>
+  {{ linked_assets_json|json_script:"risk-linked-assets" }}
+  {{ dependency_edges_json|json_script:"risk-dependency-edges" }}
+  <script>
+    (function () {
+      const nodeDataEl = document.getElementById("risk-linked-assets");
+      const edgeDataEl = document.getElementById("risk-dependency-edges");
+      const svg = document.getElementById("dependency-graph");
+      if (!nodeDataEl || !edgeDataEl || !svg) return;
+
+      const nodes = JSON.parse(nodeDataEl.textContent || "[]");
+      const edgesRaw = JSON.parse(edgeDataEl.textContent || "[]");
+      const width = 900;
+      const height = 480;
+      const radius = 26;
+
+      const edgeLayer = svg.querySelector("#edges");
+      const nodeLayer = svg.querySelector("#nodes");
+      edgeLayer.innerHTML = "";
+      nodeLayer.innerHTML = "";
+
+      if (!nodes.length) {
+        return;
+      }
+
+      const angleStep = (Math.PI * 2) / nodes.length;
+      const positions = new Map();
+      nodes.forEach((node, idx) => {
+        const angle = idx * angleStep;
+        const x = width / 2 + Math.cos(angle) * (width * 0.35);
+        const y = height / 2 + Math.sin(angle) * (height * 0.3);
+        positions.set(node.id, { x, y, label: node.asset_code || node.asset_name || `A${node.id}` });
+      });
+
+      edgesRaw.forEach(edge => {
+        const source = positions.get(edge.source_asset_id);
+        const target = positions.get(edge.target_asset_id);
+        if (!source || !target) return;
+
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        line.setAttribute("x1", source.x);
+        line.setAttribute("y1", source.y);
+        line.setAttribute("x2", target.x);
+        line.setAttribute("y2", target.y);
+        line.setAttribute("stroke", "url(#edgeGrad)");
+        line.setAttribute("stroke-width", Math.max(1, edge.strength || 2));
+        line.setAttribute("marker-end", "url(#arrowHead)");
+        edgeLayer.appendChild(line);
+      });
+
+      nodes.forEach(node => {
+        const pos = positions.get(node.id);
+        const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
+
+        const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        circle.setAttribute("cx", pos.x);
+        circle.setAttribute("cy", pos.y);
+        circle.setAttribute("r", radius);
+        circle.setAttribute("fill", node.id === {{ risk.primary_asset_id|default:"null" }} ? "#0f5f94" : "#e8f0fa");
+        circle.setAttribute("stroke", "#0b3756");
+        circle.setAttribute("stroke-width", "2");
+
+        const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        text.setAttribute("x", pos.x);
+        text.setAttribute("y", pos.y + 4);
+        text.setAttribute("text-anchor", "middle");
+        text.setAttribute("font-size", "10");
+        text.setAttribute("fill", node.id === {{ risk.primary_asset_id|default:"null" }} ? "#fff" : "#0b3756");
+        text.textContent = pos.label.slice(0, 8);
+
+        group.appendChild(circle);
+        group.appendChild(text);
+        nodeLayer.appendChild(group);
+      });
+    })();
+  </script>
+</div>
+
+<div class="card">
+  <h3>{% trans "Dependency Edges" %}</h3>
+  <table class="table table-striped table-hover">
+    <thead>
+      <tr>
+        <th>{% trans "Source" %}</th>
+        <th>{% trans "Type" %}</th>
+        <th>{% trans "Target" %}</th>
+        <th>{% trans "Strength" %}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for edge in dependency_edges %}
+      <tr>
+        <td>{{ edge.source_asset.asset_code }}</td>
+        <td>{{ edge.dependency_type }}</td>
+        <td>{{ edge.target_asset.asset_code }}</td>
+        <td>{{ edge.strength }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="4">{% trans "No dependencies between linked assets." %}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>

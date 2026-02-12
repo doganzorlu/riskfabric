@@ -1,0 +1,20 @@
+{% load i18n %}
+<div class="card">
+  <h1>{% trans "Risk Detail" %}: #{{ risk.id }} - {{ risk.title }}</h1>
+  <p class="muted">{{ risk.description }}</p>
+  <p>
+    <strong>{% trans "Primary Asset" %}:</strong> {{ risk.primary_asset.asset_code }}<br />
+    <strong>{% trans "Location" %}:</strong>
+    {% if risk.business_unit %}{{ risk.business_unit.code }}{% endif %}
+    / {% if risk.cost_center %}{{ risk.cost_center.code }}{% endif %}
+    / {% if risk.section %}{{ risk.section.code }}{% endif %}
+  </p>
+  <p>
+    <strong>{% trans "Scores" %}:</strong> {{ risk.inherent_score }} / {{ risk.residual_score }}<br />
+    <strong>{% trans "Scoring Method" %}:</strong>
+    {% if risk.scoring_method %}{{ risk.scoring_method.name }}{% else %}-{% endif %}
+  </p>
+  <div id="risk-status-{{ risk.id }}">
+    {% include "webui/partials/risk_status_cell.html" with risk=risk risk_status_choices=risk_status_choices can_manage_risks=can_manage_risks %}
+  </div>
+</div>

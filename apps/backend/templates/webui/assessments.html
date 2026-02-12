@@ -1,0 +1,94 @@
+{% extends "webui/base.html" %}
+{% load i18n %}
+{% block content %}
+<div class="card">
+  <h1>{% trans "Assessments" %}</h1>
+  <p class="muted">{% trans "Plan and track internal or external assessments." %}</p>
+  <form method="get" class="filter-grid" style="margin-top: 12px;">
+    <div>
+      <input id="assessment-filter" type="text" name="q" value="{{ query }}" placeholder="{% trans 'Title, owner, status' %}" aria-label="{% trans 'Search Assessments' %}" />
+    </div>
+    <div class="actions">
+      <button type="submit" class="btn btn-primary">{% trans "Filter" %}</button>
+      {% if can_manage_risks %}
+        <a href="?q={{ query }}&new=1" class="btn btn-success">{% trans "New Assessment" %}</a>
+      {% endif %}
+    </div>
+  </form>
+</div>
+
+{% if show_form %}
+<div class="card">
+  <h2>{% if edit_instance %}{% trans "Edit Assessment" %}{% else %}{% trans "New Assessment" %}{% endif %}</h2>
+  {% if can_manage_risks %}
+  <form method="post">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="save" />
+    <input type="hidden" name="return_q" value="{{ query }}" />
+    {% if edit_instance %}
+      <input type="hidden" name="assessment_id" value="{{ edit_instance.id }}" />
+    {% endif %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-primary">{% trans "Save Assessment" %}</button>
+    <a href="?q={{ query }}" class="btn btn-outline-secondary">{% trans "Cancel" %}</a>
+  </form>
+  {% else %}
+  <p class="muted">{% trans "You do not have permission to manage assessments." %}</p>
+  {% endif %}
+</div>
+{% endif %}
+
+<div class="card">
+  <h2>{% trans "Assessment Register" %}</h2>
+  <table class="table table-striped table-hover">
+    <thead>
+      <tr>
+        <th>{% trans "Title" %}</th>
+        <th>{% trans "Type" %}</th>
+        <th>{% trans "Status" %}</th>
+        <th>{% trans "Owner" %}</th>
+        <th>{% trans "Start Date" %}</th>
+        <th>{% trans "End Date" %}</th>
+        <th>{% trans "Actions" %}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in assessments %}
+      <tr>
+        <td>{{ item.title }}</td>
+        <td>{{ item.get_assessment_type_display }}</td>
+        <td>{{ item.get_status_display }}</td>
+        <td>{{ item.owner }}</td>
+        <td>{{ item.start_date|default:"-" }}</td>
+        <td>{{ item.end_date|default:"-" }}</td>
+        <td class="actions">
+          <a href="?q={{ query }}&edit={{ item.id }}" class="btn btn-outline-secondary btn-sm">{% trans "Edit" %}</a>
+          {% if can_manage_risks %}
+          <form method="post" style="display:inline;" onsubmit="return confirm('{% trans "Delete this assessment?" %}');">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="delete" />
+            <input type="hidden" name="assessment_id" value="{{ item.id }}" />
+            <input type="hidden" name="return_q" value="{{ query }}" />
+            <button type="submit" class="btn btn-danger btn-sm">{% trans "Delete" %}</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="7">{% trans "No assessments found." %}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% if page_obj %}
+  <div class="actions" style="margin-top: 12px;">
+    {% if page_obj.has_previous %}
+      <a href="?q={{ query }}&page={{ page_obj.previous_page_number }}">{% trans "Previous" %}</a>
+    {% endif %}
+    <span class="muted">{% trans "Page" %} {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+      <a href="?q={{ query }}&page={{ page_obj.next_page_number }}">{% trans "Next" %}</a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

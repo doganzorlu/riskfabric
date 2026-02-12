@@ -1,0 +1,59 @@
+{% extends "webui/base.html" %}
+{% load i18n %}
+{% block content %}
+<div class="card">
+  <h1>{% trans "Assets" %}</h1>
+  <p>{% trans "Excel metadata is fully shown below, including location hierarchy fields." %}</p>
+  <form method="get" class="filter-grid" style="margin-top: 12px;">
+    <div>
+      <input id="asset-search" type="text" name="q" value="{{ query }}" placeholder="{% trans 'Code, name, location, type' %}" aria-label="{% trans 'Search' %}" />
+    </div>
+    <div class="actions">
+      <button type="submit" class="btn btn-primary">{% trans "Filter" %}</button>
+    </div>
+  </form>
+  <table class="table table-striped table-hover">
+    <thead>
+      <tr>
+        <th>{% trans "Code" %}</th>
+        <th>{% trans "Name" %}</th>
+        <th>{% trans "Business Unit" %}</th>
+        <th>{% trans "Cost Center" %}</th>
+        <th>{% trans "Section" %}</th>
+        <th>{% trans "Parent" %}</th>
+        <th>{% trans "Type" %}</th>
+        <th>{% trans "Status" %}</th>
+        <th>{% trans "Group" %}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for asset in assets %}
+      <tr>
+        <td>{{ asset.asset_code }}</td>
+        <td>{{ asset.asset_name }}</td>
+        <td>{% if asset.business_unit %}{{ asset.business_unit.code }}{% endif %}</td>
+        <td>{% if asset.cost_center %}{{ asset.cost_center.code }}{% endif %}</td>
+        <td>{% if asset.section %}{{ asset.section.code }}{% endif %}</td>
+        <td>{% if asset.parent_asset %}{{ asset.parent_asset.asset_code }}{% endif %}</td>
+        <td>{% if asset.asset_type %}{{ asset.asset_type.code }}{% endif %}</td>
+        <td>{% if asset.asset_status %}{{ asset.asset_status.code }}{% endif %}</td>
+        <td>{% if asset.asset_group %}{{ asset.asset_group.code }}{% endif %}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="9">{% trans "No assets found." %}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% if page_obj %}
+  <div class="actions" style="margin-top: 12px;">
+    {% if page_obj.has_previous %}
+      <a href="?q={{ query }}&page={{ page_obj.previous_page_number }}">{% trans "Previous" %}</a>
+    {% endif %}
+    <span class="muted">{% trans "Page" %} {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+      <a href="?q={{ query }}&page={{ page_obj.next_page_number }}">{% trans "Next" %}</a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,71 @@
+# Readme.AI
+
+This file is for AI coding agents contributing to RiskFabric.
+
+## 1. Mission Context
+
+RiskFabric is an asset-first risk management product integrated with EAM.
+
+Core rule: no risk exists without asset linkage.
+
+## 2. Non-Negotiable Constraints
+
+- Product language is English-first.
+- Turkish is secondary localization only.
+- No Turkish variable, function, class, table, column, enum, or API names.
+- Keep architecture API-first and integration-safe.
+
+## 3. Domain Invariants
+
+- Every risk must reference at least one asset.
+- Asset hierarchy and dependencies must be preserved.
+- Risk propagation is computed impact, not blind risk duplication.
+- Integration writes must be idempotent.
+
+## 4. Required References Before Changes
+
+Read these first:
+
+- `docs/project-design.md`
+- `docs/eam-asset-configuration-model.md`
+- `docs/engineering-standards.md`
+- `packages/contracts/beam-web-service-v1.openapi.yaml`
+- `docs/integration/beam-plugin-contract.md`
+
+## 5. Technical Direction (Locked)
+
+- Backend: Django + Django REST Framework.
+- Python dependency and environment management: Poetry.
+- Async jobs: Celery + Redis.
+- Database strategy: SQLite for local development, MariaDB for test and production.
+- API contract: OpenAPI (schema kept current with implementation).
+- Web UI: Django templates + HTMX + Alpine.js + Chart.js.
+- Mobile: Flutter client using the same REST APIs.
+
+## 6. Working Rules for AI Agents
+
+- Avoid introducing new terminology when existing domain terms exist.
+- Preserve naming consistency with canonical English mappings.
+- Add tests with all behavior changes.
+- Update docs when assumptions or contracts change.
+- Do not add hidden magic behavior in sync logic.
+
+## 7. Suggested Initial Repository Structure
+
+- `apps/backend` - Django project and apps
+- `apps/worker` - Celery worker entrypoints
+- `apps/web` - Django template/static frontend assets
+- `apps/mobile` - Flutter app (future)
+- `packages/contracts` - OpenAPI and integration contracts
+- `infra` - docker/k8s/terraform templates
+- `docs` - architecture, standards, runbooks
+
+## 8. Agent Output Expectations
+
+For each significant change, include:
+
+- brief intent
+- changed files
+- migration impact
+- API contract impact
+- rollback notes

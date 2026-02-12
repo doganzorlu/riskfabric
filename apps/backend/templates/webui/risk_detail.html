@@ -1,0 +1,194 @@
+{% extends "webui/base.html" %}
+{% load i18n %}
+{% block content %}
+<div id="risk-summary">
+  {% include "webui/partials/risk_summary.html" %}
+</div>
+
+<div class="card">
+  <h2>{% trans "Edit Risk" %}</h2>
+  {% if can_manage_risks %}
+  <form method="post"
+        hx-post="{% url 'webui:risk-detail' risk.id %}"
+        hx-target="#risk-summary"
+        hx-swap="outerHTML">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="update_risk" />
+    {{ update_form.as_p }}
+    <button type="submit" class="btn btn-primary">{% trans "Save Changes" %}</button>
+    <a href="{% url 'webui:risk-detail' risk.id %}" class="btn btn-outline-secondary">{% trans "Cancel" %}</a>
+  </form>
+  {% else %}
+  <p class="muted">{% trans "You do not have permission to update risks." %}</p>
+  {% endif %}
+</div>
+
+<div id="risk-linked-assets">
+  {% include "webui/partials/risk_linked_assets.html" %}
+</div>
+
+<div class="card">
+  {% include "webui/partials/risk_dependency_graph.html" %}
+</div>
+
+<div class="card">
+  <h2>{% trans "Approval Workflow" %}</h2>
+  <div class="row">
+    <div class="card">
+      <h3>{% trans "Request Approval" %}</h3>
+      {% if can_manage_risks %}
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="request_approval" />
+        {{ approval_request_form.as_p }}
+        <button type="submit" class="btn btn-primary">{% trans "Request Approval" %}</button>
+        <a href="{% url 'webui:risk-detail' risk.id %}" class="btn btn-outline-secondary">{% trans "Cancel" %}</a>
+      </form>
+      {% else %}
+      <p class="muted">{% trans "You do not have permission to request approval." %}</p>
+      {% endif %}
+    </div>
+    <div class="card">
+      <h3>{% trans "Decide Approval" %}</h3>
+      {% if can_review_risks %}
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="decide_approval" />
+        <label>{% trans "Approval Request" %}</label>
+        <select name="approval_id">
+          {% for item in approvals %}
+            {% if item.status == "pending" %}
+              <option value="{{ item.id }}">#{{ item.id }} - {{ item.requested_by.username }} ({{ item.created_at }})</option>
+            {% endif %}
+          {% endfor %}
+        </select>
+        {{ approval_decision_form.as_p }}
+        <button type="submit" class="btn btn-primary">{% trans "Save Decision" %}</button>
+        <a href="{% url 'webui:risk-detail' risk.id %}" class="btn btn-outline-secondary">{% trans "Cancel" %}</a>
+      </form>
+      {% else %}
+      <p class="muted">{% trans "You do not have permission to decide approvals." %}</p>
+      {% endif %}
+    </div>
+  </div>
+  <div class="card" style="margin-top: 12px;">
+    <h3>{% trans "Approval History" %}</h3>
+    <table class="table table-striped table-hover">
+      <thead>
+        <tr>
+          <th>{% trans "Status" %}</th>
+          <th>{% trans "Requested By" %}</th>
+          <th>{% trans "Requested At" %}</th>
+          <th>{% trans "Decided By" %}</th>
+          <th>{% trans "Decided At" %}</th>
+          <th>{% trans "Comments" %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in approvals %}
+        <tr>
+          <td>{{ item.get_status_display }}</td>
+          <td>{{ item.requested_by.username }}</td>
+          <td>{{ item.created_at }}</td>
+          <td>{% if item.decided_by %}{{ item.decided_by.username }}{% endif %}</td>
+          <td>{{ item.decided_at }}</td>
+          <td>{{ item.comments }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6">{% trans "No approvals yet." %}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="row">
+  <div class="card">
+    <h2>{% trans "Apply Scoring Method" %}</h2>
+    {% if can_manage_risks %}
+    <form method="post"
+          hx-post="{% url 'webui:risk-detail' risk.id %}"
+          hx-target="#risk-summary"
+          hx-swap="outerHTML">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="apply_scoring" />
+      {{ scoring_form.as_p }}
+      <button type="submit" class="btn btn-primary">{% trans "Apply Scoring" %}</button>
+      <a href="{% url 'webui:risk-detail' risk.id %}" class="btn btn-outline-secondary">{% trans "Cancel" %}</a>
+    </form>
+    {% else %}
+    <p class="muted">{% trans "You do not have permission to apply scoring." %}</p>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <h2>{% trans "Add Treatment" %}</h2>
+    {% if can_manage_risks %}
+    <form method="post"
+          hx-post="{% url 'webui:risk-detail' risk.id %}"
+          hx-target="#risk-treatments"
+          hx-swap="outerHTML">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="add_treatment" />
+      <input id="control-filter" type="text" placeholder="{% trans 'Type to filter controls' %}" aria-label="{% trans 'Filter Controls' %}" />
+      {{ treatment_form.as_p }}
+      <button type="submit" class="btn btn-primary">{% trans "Add Treatment" %}</button>
+      <a href="{% url 'webui:risk-detail' risk.id %}" class="btn btn-outline-secondary">{% trans "Cancel" %}</a>
+    </form>
+    {% else %}
+    <p class="muted">{% trans "You do not have permission to manage treatments." %}</p>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <h2>{% trans "Add Review" %}</h2>
+    {% if can_review_risks %}
+    <form method="post"
+          hx-post="{% url 'webui:risk-detail' risk.id %}"
+          hx-target="#risk-reviews"
+          hx-swap="outerHTML">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="add_review" />
+      {{ review_form.as_p }}
+      <button type="submit" class="btn btn-primary">{% trans "Add Review" %}</button>
+      <a href="{% url 'webui:risk-detail' risk.id %}" class="btn btn-outline-secondary">{% trans "Cancel" %}</a>
+    </form>
+    {% else %}
+    <p class="muted">{% trans "You do not have permission to add reviews." %}</p>
+    {% endif %}
+  </div>
+</div>
+
+<div id="risk-treatments">
+  {% include "webui/partials/risk_treatments.html" %}
+</div>
+
+<div id="risk-reviews">
+  {% include "webui/partials/risk_reviews.html" %}
+</div>
+
+<div id="risk-scoring-history">
+  {% include "webui/partials/risk_scoring_history.html" %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+  (function () {
+    const filterInput = document.getElementById("control-filter");
+    const select = document.getElementById("id_treatment-control");
+    if (!filterInput || !select) return;
+    const options = Array.from(select.options);
+    const render = () => {
+      const term = filterInput.value.trim().toLowerCase();
+      options.forEach(option => {
+        const match = option.text.toLowerCase().includes(term);
+        option.hidden = !match;
+      });
+    };
+    filterInput.addEventListener("input", render);
+    render();
+  })();
+</script>
+{% endblock %}

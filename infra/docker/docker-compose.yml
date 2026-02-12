@@ -1,0 +1,66 @@
+x-app-common: &app-common
+  build:
+    context: ../../apps/backend
+    dockerfile: Dockerfile
+  environment:
+    DJANGO_ENV: ${DJANGO_ENV:-development}
+    DJANGO_DEBUG: ${DJANGO_DEBUG:-true}
+    DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1,backend}
+    DB_HOST: ${DB_HOST:-mariadb}
+    DB_PORT: ${DB_PORT:-3306}
+    DB_NAME: ${DB_NAME:-riskfabric}
+    DB_USER: ${DB_USER:-riskfabric}
+    DB_PASSWORD: ${DB_PASSWORD:-riskfabric}
+    CELERY_BROKER_URL: ${CELERY_BROKER_URL:-redis://redis:6379/1}
+    CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND:-redis://redis:6379/2}
+    EAM_PLUGIN_NAME: ${EAM_PLUGIN_NAME:-excel_bootstrap}
+    EAM_PLUGIN_VERSION: ${EAM_PLUGIN_VERSION:-v1}
+    EAM_EXCEL_FILE_PATH: ${EAM_EXCEL_FILE_PATH:-/datasource/inventory.xls}
+    AUDIT_RETENTION_DAYS: ${AUDIT_RETENTION_DAYS:-180}
+    AUDIT_RETENTION_SCHEDULE_HOUR: ${AUDIT_RETENTION_SCHEDULE_HOUR:-2}
+    AUDIT_RETENTION_SCHEDULE_MINUTE: ${AUDIT_RETENTION_SCHEDULE_MINUTE:-30}
+  volumes:
+    - ../../apps/backend:/app
+    - ../../apps/datasource:/datasource
+  depends_on:
+    - redis
+    - mariadb
+
+services:
+  backend:
+    profiles: ["app"]
+    <<: *app-common
+    command: sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+    ports:
+      - "8000:8000"
+
+  worker:
+    profiles: ["app"]
+    <<: *app-common
+    command: celery -A config.celery:app worker -l info
+
+  beat:
+    profiles: ["app"]
+    <<: *app-common
+    command: celery -A config.celery:app beat -l info
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  mariadb:
+    image: mariadb:11
+    environment:
+      MARIADB_DATABASE: ${DB_NAME:-riskfabric}
+      MARIADB_USER: ${DB_USER:-riskfabric}
+      MARIADB_PASSWORD: ${DB_PASSWORD:-riskfabric}
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD:-riskfabric_root}
+    ports:
+      - "3306:3306"
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
+    volumes:
+      - mariadb_data:/var/lib/mysql
+
+volumes:
+  mariadb_data:

@@ -1,0 +1,90 @@
+{% extends "webui/base.html" %}
+{% load i18n %}
+{% block content %}
+<div class="card">
+  <h1>{% trans "Governance Programs" %}</h1>
+  <p class="muted">{% trans "Track governance initiatives and program objectives." %}</p>
+  <form method="get" class="filter-grid" style="margin-top: 12px;">
+    <div>
+      <input id="governance-filter" type="text" name="q" value="{{ query }}" placeholder="{% trans 'Name, owner, status' %}" aria-label="{% trans 'Search Governance Programs' %}" />
+    </div>
+    <div class="actions">
+      <button type="submit" class="btn btn-primary">{% trans "Filter" %}</button>
+      {% if can_manage_risks %}
+        <a href="?q={{ query }}&new=1" class="btn btn-success">{% trans "New Program" %}</a>
+      {% endif %}
+    </div>
+  </form>
+</div>
+
+{% if show_form %}
+<div class="card">
+  <h2>{% if edit_instance %}{% trans "Edit Program" %}{% else %}{% trans "New Program" %}{% endif %}</h2>
+  {% if can_manage_governance %}
+  <form method="post">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="save" />
+    <input type="hidden" name="return_q" value="{{ query }}" />
+    {% if edit_instance %}
+      <input type="hidden" name="program_id" value="{{ edit_instance.id }}" />
+    {% endif %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-primary">{% trans "Save Program" %}</button>
+    <a href="?q={{ query }}" class="btn btn-outline-secondary">{% trans "Cancel" %}</a>
+  </form>
+  {% else %}
+  <p class="muted">{% trans "You do not have permission to manage governance programs." %}</p>
+  {% endif %}
+</div>
+{% endif %}
+
+<div class="card">
+  <h2>{% trans "Programs" %}</h2>
+  <table class="table table-striped table-hover">
+    <thead>
+      <tr>
+        <th>{% trans "Name" %}</th>
+        <th>{% trans "Status" %}</th>
+        <th>{% trans "Owner" %}</th>
+        <th>{% trans "Review Date" %}</th>
+        <th>{% trans "Actions" %}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in programs %}
+      <tr>
+        <td>{{ item.name }}</td>
+        <td>{{ item.get_status_display }}</td>
+        <td>{{ item.owner }}</td>
+        <td>{{ item.review_date|default:"-" }}</td>
+        <td class="actions">
+          <a href="?q={{ query }}&edit={{ item.id }}" class="btn btn-outline-secondary btn-sm">{% trans "Edit" %}</a>
+          {% if can_manage_governance %}
+          <form method="post" style="display:inline;" onsubmit="return confirm('{% trans "Delete this program?" %}');">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="delete" />
+            <input type="hidden" name="program_id" value="{{ item.id }}" />
+            <input type="hidden" name="return_q" value="{{ query }}" />
+            <button type="submit" class="btn btn-danger btn-sm">{% trans "Delete" %}</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5">{% trans "No programs found." %}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% if page_obj %}
+  <div class="actions" style="margin-top: 12px;">
+    {% if page_obj.has_previous %}
+      <a href="?q={{ query }}&page={{ page_obj.previous_page_number }}">{% trans "Previous" %}</a>
+    {% endif %}
+    <span class="muted">{% trans "Page" %} {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+      <a href="?q={{ query }}&page={{ page_obj.next_page_number }}">{% trans "Next" %}</a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

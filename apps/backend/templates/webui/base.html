@@ -1,0 +1,167 @@
+{% load i18n %}
+<!doctype html>
+<html lang="{{ LANGUAGE_CODE }}">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{% trans "RiskFabric" %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.9/dist/cdn.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js" defer></script>
+    <style>
+      body { font-family: "Segoe UI", Tahoma, sans-serif; margin: 0; background: #f2f5f8; color: #1b2733; }
+      .layout { display: grid; grid-template-columns: 230px 1fr; min-height: 100vh; }
+      .sidebar { background: #0f2d46; color: #eef6ff; padding: 20px; }
+      .sidebar h2 { margin-top: 0; font-size: 18px; }
+      .sidebar a { display: block; color: #eef6ff; text-decoration: none; margin: 10px 0; }
+      .main { padding: 24px; }
+      .card { background: #fff; border-radius: 10px; padding: 16px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+      table { width: 100%; border-collapse: collapse; }
+      th, td { text-align: left; padding: 10px; border-bottom: 1px solid #e7edf3; }
+      th { background: #f8fbff; }
+      .kpi { display: grid; grid-template-columns: repeat(3, minmax(120px, 1fr)); gap: 12px; }
+      .msg { padding: 10px; border-radius: 8px; margin-bottom: 10px; }
+      .msg.success { background: #e7f8ed; color: #155724; }
+      .msg.error { background: #fdebea; color: #7f1d1d; }
+      input, select, textarea { width: 100%; padding: 8px; margin-top: 4px; margin-bottom: 10px; }
+      button { cursor: pointer; }
+      button:not([class]) {
+        padding: 0.375rem 0.75rem;
+        border-radius: 0.375rem;
+        border: 1px solid #0d6efd;
+        background: #0d6efd;
+        color: #fff;
+      }
+      .inline-grid { display: grid; grid-template-columns: repeat(3, minmax(160px, 1fr)); gap: 10px; }
+      .tree ul { list-style-type: none; margin: 0; padding-left: 18px; }
+      .tree li { margin: 6px 0; }
+      .pill { display: inline-block; background: #e8f0fa; border-radius: 999px; padding: 2px 8px; font-size: 12px; }
+      .lang-switch { margin-top: 16px; }
+      .lang-switch select { width: 100%; }
+      .row { display: grid; grid-template-columns: repeat(2, minmax(240px, 1fr)); gap: 16px; }
+      .muted { color: #62717f; font-size: 14px; }
+      .filter-grid { display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 10px; align-items: center; }
+      .badge { display: inline-block; padding: 2px 7px; border-radius: 6px; background: #e6edf6; }
+      .actions { display: flex; gap: 8px; align-items: center; }
+      .htmx-indicator { display: none; }
+      .htmx-request .htmx-indicator { display: inline; }
+      .nav-group { margin-top: 12px; }
+      .nav-group summary { cursor: pointer; font-weight: 600; padding: 6px 0; list-style: none; color: #1e2a36; }
+      .nav-group summary::-webkit-details-marker { display: none; }
+      .nav-group[open] summary { color: #1e2a36; }
+      .nav-group .nav-items { display: flex; flex-direction: column; gap: 6px; margin: 6px 0 10px; }
+      .nav-group .nav-items a { padding-left: 4px; }
+      @media (max-width: 900px) {
+        .layout { grid-template-columns: 1fr; }
+        .row { grid-template-columns: 1fr; }
+        .filter-grid { grid-template-columns: 1fr; }
+      }
+    </style>
+    {% block extra_head %}{% endblock %}
+  </head>
+  <body>
+    <div class="layout">
+      <aside class="sidebar">
+        <h2>{% trans "RiskFabric" %}</h2>
+        <a href="{% url 'webui:dashboard' %}">{% trans "Dashboard" %}</a>
+        <a href="{% url 'webui:work-queue' %}">{% trans "Work Queue" %}</a>
+
+        <details class="nav-group" open>
+          <summary>{% trans "Risk" %}</summary>
+          <div class="nav-items">
+            <a href="{% url 'webui:risk-list' %}">{% trans "Risks" %}</a>
+            <a href="{% url 'webui:assessments' %}">{% trans "Assessments" %}</a>
+            <a href="{% url 'webui:vulnerabilities' %}">{% trans "Vulnerabilities" %}</a>
+            <a href="{% url 'webui:risk-heatmap' %}">{% trans "Risk Heatmap" %}</a>
+            <a href="{% url 'webui:risk-controls' %}">{% trans "Controls Library" %}</a>
+            <a href="{% url 'webui:control-tests' %}">{% trans "Control Testing" %}</a>
+            <a href="{% url 'webui:risk-issues' %}">{% trans "Issues" %}</a>
+            <a href="{% url 'webui:risk-exceptions' %}">{% trans "Exceptions" %}</a>
+            <a href="{% url 'webui:third-party-vendors' %}">{% trans "Third-Party Vendors" %}</a>
+            <a href="{% url 'webui:third-party-risks' %}">{% trans "Third-Party Risks" %}</a>
+            <a href="{% url 'webui:risk-reports' %}">{% trans "Scheduled Reports" %}</a>
+            <a href="{% url 'webui:risk-notifications' %}">{% trans "Notifications" %}{% if unread_notification_count %} <span class="badge">{{ unread_notification_count }}</span>{% endif %}</a>
+            {% if can_manage_scoring %}
+            <a href="{% url 'webui:scoring-method-list' %}">{% trans "Scoring Methods" %}</a>
+            {% endif %}
+          </div>
+        </details>
+
+        <details class="nav-group" open>
+          <summary>{% trans "Compliance" %}</summary>
+          <div class="nav-items">
+            {% if can_manage_governance %}
+            <a href="{% url 'webui:governance-programs' %}">{% trans "Governance Programs" %}</a>
+            <a href="{% url 'webui:policy-standards' %}">{% trans "Policies & Standards" %}</a>
+            <a href="{% url 'webui:policy-mappings' %}">{% trans "Policy Mappings" %}</a>
+            {% endif %}
+            {% if can_view_compliance %}
+            <a href="{% url 'webui:compliance-frameworks' %}">{% trans "Compliance Frameworks" %}</a>
+            <a href="{% url 'webui:compliance-requirements' %}">{% trans "Compliance Requirements" %}</a>
+            {% endif %}
+          </div>
+        </details>
+
+        <details class="nav-group">
+          <summary>{% trans "Reports" %}</summary>
+          <div class="nav-items">
+            <a href="{% url 'webui:reports-overview' %}">{% trans "Reports Overview" %}</a>
+            <a href="{% url 'webui:risk-reports' %}">{% trans "Scheduled Reports" %}</a>
+            <a href="{% url 'webui:assessment-reports' %}">{% trans "Assessment Reports" %}</a>
+            <a href="{% url 'webui:vulnerability-reports' %}">{% trans "Vulnerability Reports" %}</a>
+            {% if can_view_compliance %}
+            <a href="{% url 'webui:compliance-reports' %}">{% trans "Compliance Reports" %}</a>
+            {% endif %}
+          </div>
+        </details>
+
+        <details class="nav-group">
+          <summary>{% trans "System Parameters" %}</summary>
+          <div class="nav-items">
+            <a href="{% url 'webui:asset-list' %}">{% trans "Assets" %}</a>
+            <a href="{% url 'webui:location-risks' %}">{% trans "Location Risks" %}</a>
+            <a href="{% url 'webui:location-tree' %}">{% trans "Location Tree" %}</a>
+            {% if can_view_audit %}
+            <a href="{% url 'webui:audit-log' %}">{% trans "Audit Log" %}</a>
+            {% endif %}
+            {% if can_run_sync %}
+            <a href="{% url 'webui:integration-sync' %}">{% trans "EAM Sync" %}</a>
+            {% endif %}
+            <a href="/admin/">{% trans "Admin Panel" %}</a>
+          </div>
+        </details>
+
+        <details class="nav-group">
+          <summary>{% trans "Account" %}</summary>
+          <div class="nav-items">
+            <a href="{% url 'webui:logout' %}">{% trans "Logout" %}</a>
+          </div>
+        </details>
+
+        <div class="lang-switch">
+          <form action="{% url 'set_language' %}" method="post">
+            {% csrf_token %}
+            <input name="next" type="hidden" value="{{ request.path }}" />
+            <label for="lang">{% trans "Language" %}</label>
+            <select id="lang" name="language" onchange="this.form.submit()">
+              {% get_current_language as LANGUAGE_CODE %}
+              {% get_available_languages as LANGUAGES %}
+              {% for lang in LANGUAGES %}
+                <option value="{{ lang.0 }}" {% if lang.0 == LANGUAGE_CODE %}selected{% endif %}>{{ lang.1 }}</option>
+              {% endfor %}
+            </select>
+          </form>
+        </div>
+      </aside>
+      <main class="main">
+        <div id="flash-messages">
+          {% include "webui/partials/flash_messages.html" %}
+        </div>
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" defer></script>
+    {% block extra_js %}{% endblock %}
+  </body>
+</html>

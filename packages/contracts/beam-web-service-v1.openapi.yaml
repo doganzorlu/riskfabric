@@ -1,0 +1,262 @@
+openapi: 3.0.3
+info:
+  title: RiskFabric - BEAM Web Service Contract
+  version: 1.0.0
+  description: |
+    Contract used by RiskFabric BEAM plugin (beam_web_service:v1).
+    - Inbound: pull assets from BEAM
+    - Outbound: push risk processing results to BEAM
+servers:
+  - url: https://beam.example.com
+    description: Example BEAM server
+tags:
+  - name: BeamAssets
+  - name: BeamRisks
+paths:
+  /api/v1/assets:
+    get:
+      tags: [BeamAssets]
+      summary: Pull assets from BEAM
+      operationId: getBeamAssets
+      parameters:
+        - in: query
+          name: updated_since
+          schema:
+            type: string
+            format: date-time
+          required: false
+          description: Return assets updated after this timestamp.
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - in: query
+          name: page_size
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+            default: 200
+      responses:
+        '200':
+          description: Asset list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BeamAssetListResponse'
+        '401':
+          description: Unauthorized
+        '500':
+          description: Server error
+  /api/v1/risks/upsert:
+    post:
+      tags: [BeamRisks]
+      summary: Upsert risk processing results into BEAM
+      operationId: upsertBeamRisks
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BeamRiskUpsertRequest'
+      responses:
+        '200':
+          description: Upsert result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BeamRiskUpsertResponse'
+        '400':
+          description: Validation error
+        '401':
+          description: Unauthorized
+        '500':
+          description: Server error
+components:
+  securitySchemes:
+    BeamClientCredentials:
+      type: apiKey
+      in: header
+      name: X-Client-Id
+  schemas:
+    BeamAssetListResponse:
+      type: object
+      required: [items, page, page_size, total]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/BeamAsset'
+        page:
+          type: integer
+        page_size:
+          type: integer
+        total:
+          type: integer
+    BeamAsset:
+      type: object
+      required:
+        - asset_code
+        - asset_name
+      properties:
+        asset_code:
+          type: string
+          example: LOK.ODA.001
+        asset_name:
+          type: string
+          example: Room 101
+        parent_asset_code:
+          type: string
+          nullable: true
+          example: null
+        asset_type_code:
+          type: string
+          nullable: true
+          example: LOK
+        asset_status_code:
+          type: string
+          nullable: true
+          example: K
+        asset_group_code:
+          type: string
+          nullable: true
+          example: ODA
+        section_code:
+          type: string
+          nullable: true
+          example: 001.001.001.003
+        cost_center_code:
+          type: string
+          nullable: true
+          example: 001.001.001
+        business_unit_code:
+          type: string
+          nullable: true
+          example: 001.001
+        brand:
+          type: string
+          nullable: true
+        model:
+          type: string
+          nullable: true
+        serial_number:
+          type: string
+          nullable: true
+        is_mobile_equipment:
+          type: boolean
+          default: false
+        default_work_type:
+          type: string
+          nullable: true
+        updated_at:
+          type: string
+          format: date-time
+    BeamRiskUpsertRequest:
+      type: object
+      required: [risks]
+      properties:
+        risks:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/BeamRiskResult'
+    BeamRiskResult:
+      type: object
+      required:
+        - risk_external_key
+        - title
+        - primary_asset_code
+        - status
+        - inherent_score
+        - residual_score
+      properties:
+        risk_external_key:
+          type: string
+          description: Unique risk key shared between systems.
+          example: RF-000001
+        title:
+          type: string
+          example: Cooling outage risk
+        description:
+          type: string
+        source:
+          type: string
+          example: eam
+        category:
+          type: string
+          example: operational
+        primary_asset_code:
+          type: string
+          example: LOK.ODA.001
+        asset_codes:
+          type: array
+          items:
+            type: string
+        likelihood:
+          type: integer
+          minimum: 1
+          maximum: 5
+        impact:
+          type: integer
+          minimum: 1
+          maximum: 5
+        inherent_score:
+          type: number
+          format: float
+        residual_score:
+          type: number
+          format: float
+        status:
+          type: string
+          enum: [open, in_progress, closed]
+        owner:
+          type: string
+        due_date:
+          type: string
+          format: date
+          nullable: true
+        treatment:
+          type: object
+          nullable: true
+          properties:
+            strategy:
+              type: string
+              enum: [mitigate, accept, transfer, avoid]
+            progress_percent:
+              type: integer
+              minimum: 0
+              maximum: 100
+            notes:
+              type: string
+        synced_at:
+          type: string
+          format: date-time
+    BeamRiskUpsertResponse:
+      type: object
+      required: [accepted, rejected]
+      properties:
+        accepted:
+          type: array
+          items:
+            type: object
+            required: [risk_external_key]
+            properties:
+              risk_external_key:
+                type: string
+              beam_risk_id:
+                type: string
+              status:
+                type: string
+                example: upserted
+        rejected:
+          type: array
+          items:
+            type: object
+            required: [risk_external_key, error]
+            properties:
+              risk_external_key:
+                type: string
+              error:
+                type: string

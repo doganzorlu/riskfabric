@@ -1,0 +1,45 @@
+{% extends "webui/base.html" %}
+{% load i18n %}
+{% block content %}
+<div class="card">
+  <h1>{% trans "Work Queue" %}</h1>
+  <p class="muted">
+    {% trans "Focus on operational items requiring action." %}
+    {% trans "Window" %}: {{ today }} - {{ upcoming_limit }}
+  </p>
+  <form method="get"
+        class="filter-grid"
+        hx-get="{% url 'webui:work-queue' %}"
+        hx-target="#work-queue-content"
+        hx-trigger="change, keyup delay:350ms from:#owner-filter, keyup delay:350ms from:#reviewer-filter"
+        hx-indicator="#work-queue-loading">
+    <div>
+      <label for="owner-filter">{% trans "Treatment Owner" %}</label>
+      <input id="owner-filter" type="text" name="owner" value="{{ selected_owner }}" placeholder="{% trans 'Owner name' %}" />
+    </div>
+    <div>
+      <label for="status-filter">{% trans "Treatment Status" %}</label>
+      <select id="status-filter" name="treatment_status">
+        <option value="">{% trans "All" %}</option>
+        {% for value, label in treatment_status_choices %}
+          <option value="{{ value }}" {% if selected_treatment_status == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label for="reviewer-filter">{% trans "Reviewer" %}</label>
+      <input id="reviewer-filter" type="text" name="reviewer" value="{{ selected_reviewer }}" placeholder="{% trans 'Reviewer username' %}" />
+    </div>
+    <div class="actions">
+      <label for="window-filter">{% trans "Review Window (days)" %}</label>
+      <input id="window-filter" type="number" min="1" max="30" name="review_window_days" value="{{ review_window_days }}" />
+      <button type="submit">{% trans "Filter" %}</button>
+      <span id="work-queue-loading" class="muted htmx-indicator">{% trans "Loading..." %}</span>
+    </div>
+  </form>
+</div>
+
+<div id="work-queue-content">
+  {% include "webui/partials/work_queue_content.html" %}
+</div>
+{% endblock %}
