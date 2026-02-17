@@ -5,18 +5,24 @@
     {% trans "Primary asset is always linked. Select additional assets impacted by this risk." %}
   </p>
   {% if can_manage_risks %}
-  <form method="post"
-        hx-post="{% url 'webui:risk-detail' risk.id %}"
-        hx-target="#risk-linked-assets"
-        hx-swap="outerHTML">
-    {% csrf_token %}
-    <input type="hidden" name="action" value="link_assets" />
-    <input id="asset-filter" type="text" placeholder="{% trans 'Type to filter assets' %}" aria-label="{% trans 'Search Assets' %}" />
-    <p class="muted" id="asset-filter-count"></p>
-    {{ link_form.as_p }}
-    <button type="submit" class="btn btn-primary">{% trans "Update Linked Assets" %}</button>
-    <a href="{% url 'webui:risk-detail' risk.id %}" class="btn btn-outline-secondary">{% trans "Cancel" %}</a>
-  </form>
+  <button type="button" class="btn btn-primary" id="asset-picker-toggle">{% trans "Add Assets" %}</button>
+  <div id="asset-picker" class="card" style="margin-top: 12px; display: none;">
+    <form method="post"
+          hx-post="{% url 'webui:risk-detail' risk.id %}"
+          hx-target="#risk-linked-assets"
+          hx-swap="outerHTML">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="link_assets" />
+      <label class="form-label" for="asset-filter">{% trans "Search Assets" %}</label>
+      <input id="asset-filter" type="text" placeholder="{% trans 'Type to filter assets' %}" aria-label="{% trans 'Search Assets' %}" />
+      <p class="muted" id="asset-filter-count"></p>
+      {{ link_form.as_p }}
+      <div style="display:flex; gap: 8px; flex-wrap: wrap;">
+        <button type="submit" class="btn btn-primary">{% trans "Add Selected Assets" %}</button>
+        <button type="button" class="btn btn-outline-secondary" id="asset-picker-cancel">{% trans "Cancel" %}</button>
+      </div>
+    </form>
+  </div>
   {% else %}
   <p class="muted">{% trans "You do not have permission to update linked assets." %}</p>
   {% endif %}
@@ -69,5 +75,22 @@
 
     filterInput.addEventListener("input", render);
     render();
+  })();
+</script>
+<script>
+  (function () {
+    const toggleBtn = document.getElementById("asset-picker-toggle");
+    const picker = document.getElementById("asset-picker");
+    const cancelBtn = document.getElementById("asset-picker-cancel");
+    if (!toggleBtn || !picker) {
+      return;
+    }
+    const toggle = () => {
+      picker.style.display = picker.style.display === "none" ? "block" : "none";
+    };
+    toggleBtn.addEventListener("click", toggle);
+    if (cancelBtn) {
+      cancelBtn.addEventListener("click", toggle);
+    }
   })();
 </script>

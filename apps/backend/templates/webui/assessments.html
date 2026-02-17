@@ -80,13 +80,13 @@
     </tbody>
   </table>
   {% if page_obj %}
-  <div class="actions" style="margin-top: 12px;">
+  <div class="actions" style="margin-top: 12px; justify-content: flex-end;">
     {% if page_obj.has_previous %}
-      <a href="?q={{ query }}&page={{ page_obj.previous_page_number }}">{% trans "Previous" %}</a>
+      <a class="btn btn-outline-secondary btn-sm" href="?q={{ query }}&page={{ page_obj.previous_page_number }}">{% trans "Previous" %}</a>
     {% endif %}
     <span class="muted">{% trans "Page" %} {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
     {% if page_obj.has_next %}
-      <a href="?q={{ query }}&page={{ page_obj.next_page_number }}">{% trans "Next" %}</a>
+      <a class="btn btn-outline-secondary btn-sm" href="?q={{ query }}&page={{ page_obj.next_page_number }}">{% trans "Next" %}</a>
     {% endif %}
   </div>
   {% endif %}

@@ -1,4 +1,5 @@
 from datetime import timedelta
+from typing import Optional
 import csv
 
 from django import forms
@@ -11,6 +12,7 @@ from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbid
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
+from django.core.paginator import Paginator
 from django.utils.translation import gettext as _
 from django.views.decorators.http import require_POST
 
@@ -23,6 +25,11 @@ from risk.models import (
     RiskApproval,
     RiskCategory,
     RiskControl,
+    CriticalService,
+    Hazard,
+    HazardLink,
+    Scenario,
+    ServiceBIAProfile,
     RiskException,
     RiskIssue,
     RiskNotification,
@@ -30,6 +37,9 @@ from risk.models import (
     RiskReportSchedule,
     RiskReview,
     RiskScoringMethod,
+    RiskScoringDread,
+    RiskScoringOwasp,
+    RiskScoringCvss,
     RiskTreatment,
     ThirdPartyVendor,
     ThirdPartyRisk,
@@ -43,7 +53,9 @@ from risk.models import (
     Vulnerability,
     ComplianceFramework,
     ComplianceRequirement,
+    ContinuityStrategy,
 )
+from risk.services.resilience import simulate_scenario
 
 from .forms import (
     EamSyncForm,
@@ -57,6 +69,7 @@ from .forms import (
     RiskReportScheduleForm,
     RiskReviewCreateForm,
     RiskScoringApplyForm,
+    RiskScoringInputsForm,
     RiskScoringMethodCreateForm,
     RiskBulkUpdateForm,
     RiskUpdateForm,
@@ -73,6 +86,12 @@ from .forms import (
     VulnerabilityForm,
     ComplianceFrameworkForm,
     ComplianceRequirementForm,
+    CriticalServiceForm,
+    ServiceBIAProfileForm,
+    HazardForm,
+    HazardLinkForm,
+    ScenarioForm,
+    ContinuityStrategyForm,
 )
 
 ROLE_RISK_ADMIN = "risk_admin"
@@ -522,6 +541,10 @@ def risk_list(request):
         )
 
     show_form = request.GET.get("new") == "1"
+    page_number = request.GET.get("page", "1")
+    paginator = Paginator(risks, 20)
+    page_obj = paginator.get_page(page_number)
+    risks = page_obj.object_list
     risk_form = RiskCreateForm(prefix="risk", data=request.POST or None, user=request.user)
     scoring_form = RiskScoringApplyForm(prefix="scoring", data=request.POST or None)
     treatment_form = RiskTreatmentCreateForm(prefix="treatment", data=request.POST or None)
@@ -782,6 +805,8 @@ def risk_list(request):
         "selected_status": selected_status,
         "selected_business_unit_code": selected_business_unit_code,
         "query": query,
+        "page_obj": page_obj,
+        "is_paginated": page_obj.has_other_pages(),
         **_permission_context(request.user),
     }
 
@@ -1331,6 +1356,7 @@ def risk_detail(request, risk_id: int):
     update_form = RiskUpdateForm(prefix="edit", data=request.POST or None, instance=risk)
     link_form = RiskAssetLinkForm(prefix="link", data=request.POST or None, risk=risk, user=request.user)
     scoring_form = RiskScoringApplyForm(prefix="scoring", data=request.POST or None)
+    scoring_inputs_form = RiskScoringInputsForm(prefix="scoring_inputs", data=request.POST or None, risk=risk)
     treatment_form = RiskTreatmentCreateForm(prefix="treatment", data=request.POST or None)
     review_form = RiskReviewCreateForm(prefix="review", data=request.POST or None, user=request.user)
     approval_request_form = RiskApprovalRequestForm(prefix="approval_request", data=request.POST or None)
@@ -1367,6 +1393,7 @@ def risk_detail(request, risk_id: int):
                 return redirect("webui:risk-detail", risk_id=risk.id)
             if update_form.is_valid():
                 updated_risk = update_form.save()
+                updated_risk.refresh_scores(actor="webui")
                 create_audit_event(action="risk.update", entity_type="risk", entity_id=updated_risk.id, request=request)
                 if request.headers.get("HX-Request"):
                     return render(
@@ -1412,23 +1439,153 @@ def risk_detail(request, risk_id: int):
                 return redirect("webui:risk-detail", risk_id=risk.id)
             messages.error(request, _("Please fix linked assets form errors."))
 
-        elif action == "apply_scoring":
+        elif action == "update_scoring_inputs":
             if not _can_manage_risks(request.user):
                 create_audit_event(
-                    action="risk.scoring.apply",
+                    action="risk.scoring.update_inputs",
                     entity_type="risk",
                     status=AuditEvent.STATUS_DENIED,
-                    message="Permission denied for scoring apply.",
+                    message="Permission denied for scoring update.",
                     request=request,
                 )
-                messages.error(request, _("You do not have permission to apply scoring."))
+                messages.error(request, _("You do not have permission to update scoring inputs."))
                 return redirect("webui:risk-detail", risk_id=risk.id)
-            if scoring_form.is_valid():
-                if scoring_form.cleaned_data["risk_id"] != risk.id:
-                    messages.error(request, _("Invalid risk target for scoring update."))
-                    return redirect("webui:risk-detail", risk_id=risk.id)
-                updated_risk = scoring_form.execute()
-                create_audit_event(action="risk.scoring.apply", entity_type="risk", entity_id=updated_risk.id, request=request)
+            if scoring_inputs_form.is_valid():
+                updated_risk = risk
+                updated_risk.scoring_method = scoring_inputs_form.cleaned_data["scoring_method"]
+                updated_risk.likelihood = scoring_inputs_form.cleaned_data["likelihood"]
+                if updated_risk.scoring_method and updated_risk.scoring_method.method_type == RiskScoringMethod.METHOD_CIA:
+                    updated_risk.confidentiality = scoring_inputs_form.cleaned_data["confidentiality"]
+                    updated_risk.integrity = scoring_inputs_form.cleaned_data["integrity"]
+                    updated_risk.availability = scoring_inputs_form.cleaned_data["availability"]
+                    updated_risk.impact = updated_risk.impact
+                    RiskScoringDread.objects.filter(risk=updated_risk).delete()
+                    RiskScoringOwasp.objects.filter(risk=updated_risk).delete()
+                    RiskScoringCvss.objects.filter(risk=updated_risk).delete()
+                elif updated_risk.scoring_method and updated_risk.scoring_method.method_type == RiskScoringMethod.METHOD_DREAD:
+                    dread, _ = RiskScoringDread.objects.get_or_create(risk=updated_risk)
+                    dread.damage = scoring_inputs_form.cleaned_data["dread_damage"]
+                    dread.reproducibility = scoring_inputs_form.cleaned_data["dread_reproducibility"]
+                    dread.exploitability = scoring_inputs_form.cleaned_data["dread_exploitability"]
+                    dread.affected_users = scoring_inputs_form.cleaned_data["dread_affected_users"]
+                    dread.discoverability = scoring_inputs_form.cleaned_data["dread_discoverability"]
+                    dread.save()
+                    likelihood_vals = [
+                        dread.reproducibility,
+                        dread.exploitability,
+                        dread.discoverability,
+                    ]
+                    impact_vals = [dread.damage, dread.affected_users]
+                    updated_risk.likelihood = int(round(sum(likelihood_vals) / len(likelihood_vals)))
+                    updated_risk.impact = int(round(sum(impact_vals) / len(impact_vals)))
+                    updated_risk.confidentiality = None
+                    updated_risk.integrity = None
+                    updated_risk.availability = None
+                    RiskScoringOwasp.objects.filter(risk=updated_risk).delete()
+                    RiskScoringCvss.objects.filter(risk=updated_risk).delete()
+                elif updated_risk.scoring_method and updated_risk.scoring_method.method_type == RiskScoringMethod.METHOD_OWASP:
+                    owasp, _ = RiskScoringOwasp.objects.get_or_create(risk=updated_risk)
+                    owasp.skill_level = scoring_inputs_form.cleaned_data["owasp_skill_level"]
+                    owasp.motive = scoring_inputs_form.cleaned_data["owasp_motive"]
+                    owasp.opportunity = scoring_inputs_form.cleaned_data["owasp_opportunity"]
+                    owasp.size = scoring_inputs_form.cleaned_data["owasp_size"]
+                    owasp.ease_of_discovery = scoring_inputs_form.cleaned_data["owasp_ease_of_discovery"]
+                    owasp.ease_of_exploit = scoring_inputs_form.cleaned_data["owasp_ease_of_exploit"]
+                    owasp.awareness = scoring_inputs_form.cleaned_data["owasp_awareness"]
+                    owasp.intrusion_detection = scoring_inputs_form.cleaned_data["owasp_intrusion_detection"]
+                    owasp.loss_confidentiality = scoring_inputs_form.cleaned_data["owasp_loss_confidentiality"]
+                    owasp.loss_integrity = scoring_inputs_form.cleaned_data["owasp_loss_integrity"]
+                    owasp.loss_availability = scoring_inputs_form.cleaned_data["owasp_loss_availability"]
+                    owasp.loss_accountability = scoring_inputs_form.cleaned_data["owasp_loss_accountability"]
+                    owasp.financial_damage = scoring_inputs_form.cleaned_data["owasp_financial_damage"]
+                    owasp.reputation_damage = scoring_inputs_form.cleaned_data["owasp_reputation_damage"]
+                    owasp.non_compliance = scoring_inputs_form.cleaned_data["owasp_non_compliance"]
+                    owasp.privacy_violation = scoring_inputs_form.cleaned_data["owasp_privacy_violation"]
+                    owasp.save()
+                    likelihood_vals = [
+                        owasp.skill_level,
+                        owasp.motive,
+                        owasp.opportunity,
+                        owasp.size,
+                        owasp.ease_of_discovery,
+                        owasp.ease_of_exploit,
+                        owasp.awareness,
+                        owasp.intrusion_detection,
+                    ]
+                    impact_vals = [
+                        owasp.loss_confidentiality,
+                        owasp.loss_integrity,
+                        owasp.loss_availability,
+                        owasp.loss_accountability,
+                        owasp.financial_damage,
+                        owasp.reputation_damage,
+                        owasp.non_compliance,
+                        owasp.privacy_violation,
+                    ]
+                    updated_risk.likelihood = int(round(sum(likelihood_vals) / len(likelihood_vals)))
+                    updated_risk.impact = int(round(sum(impact_vals) / len(impact_vals)))
+                    updated_risk.confidentiality = None
+                    updated_risk.integrity = None
+                    updated_risk.availability = None
+                    RiskScoringDread.objects.filter(risk=updated_risk).delete()
+                    RiskScoringCvss.objects.filter(risk=updated_risk).delete()
+                elif updated_risk.scoring_method and updated_risk.scoring_method.method_type == RiskScoringMethod.METHOD_CVSS:
+                    cvss, _ = RiskScoringCvss.objects.get_or_create(risk=updated_risk)
+                    cvss.attack_vector = scoring_inputs_form.cleaned_data["cvss_attack_vector"]
+                    cvss.attack_complexity = scoring_inputs_form.cleaned_data["cvss_attack_complexity"]
+                    cvss.authentication = scoring_inputs_form.cleaned_data["cvss_authentication"]
+                    cvss.confidentiality_impact = scoring_inputs_form.cleaned_data["cvss_confidentiality_impact"]
+                    cvss.integrity_impact = scoring_inputs_form.cleaned_data["cvss_integrity_impact"]
+                    cvss.availability_impact = scoring_inputs_form.cleaned_data["cvss_availability_impact"]
+                    cvss.exploitability = scoring_inputs_form.cleaned_data["cvss_exploitability"]
+                    cvss.remediation_level = scoring_inputs_form.cleaned_data["cvss_remediation_level"]
+                    cvss.report_confidence = scoring_inputs_form.cleaned_data["cvss_report_confidence"]
+                    cvss.collateral_damage_potential = scoring_inputs_form.cleaned_data["cvss_collateral_damage_potential"]
+                    cvss.target_distribution = scoring_inputs_form.cleaned_data["cvss_target_distribution"]
+                    cvss.confidentiality_requirement = scoring_inputs_form.cleaned_data["cvss_confidentiality_requirement"]
+                    cvss.integrity_requirement = scoring_inputs_form.cleaned_data["cvss_integrity_requirement"]
+                    cvss.availability_requirement = scoring_inputs_form.cleaned_data["cvss_availability_requirement"]
+                    cvss.save()
+                    likelihood_vals = [
+                        cvss.attack_vector,
+                        cvss.attack_complexity,
+                        cvss.authentication,
+                        cvss.exploitability,
+                        cvss.report_confidence,
+                    ]
+                    impact_vals = [
+                        cvss.confidentiality_impact,
+                        cvss.integrity_impact,
+                        cvss.availability_impact,
+                        cvss.collateral_damage_potential,
+                        cvss.target_distribution,
+                        cvss.confidentiality_requirement,
+                        cvss.integrity_requirement,
+                        cvss.availability_requirement,
+                    ]
+                    updated_risk.likelihood = int(round(sum(likelihood_vals) / len(likelihood_vals)))
+                    updated_risk.impact = int(round(sum(impact_vals) / len(impact_vals)))
+                    updated_risk.confidentiality = None
+                    updated_risk.integrity = None
+                    updated_risk.availability = None
+                    RiskScoringDread.objects.filter(risk=updated_risk).delete()
+                    RiskScoringOwasp.objects.filter(risk=updated_risk).delete()
+                else:
+                    updated_risk.impact = scoring_inputs_form.cleaned_data["impact"]
+                    updated_risk.confidentiality = None
+                    updated_risk.integrity = None
+                    updated_risk.availability = None
+                    RiskScoringDread.objects.filter(risk=updated_risk).delete()
+                    RiskScoringOwasp.objects.filter(risk=updated_risk).delete()
+                    RiskScoringCvss.objects.filter(risk=updated_risk).delete()
+                updated_risk.save()
+                updated_risk.refresh_scores(actor="webui")
+                create_audit_event(
+                    action="risk.scoring.update_inputs",
+                    entity_type="risk",
+                    entity_id=updated_risk.id,
+                    request=request,
+                )
                 if request.headers.get("HX-Request"):
                     return render(
                         request,
@@ -1438,9 +1595,9 @@ def risk_detail(request, risk_id: int):
                             "scoring_history": updated_risk.scoring_history.all()[:20],
                         },
                     )
-                messages.success(request, _("Scoring method applied."))
+                messages.success(request, _("Scoring inputs updated."))
                 return redirect("webui:risk-detail", risk_id=risk.id)
-            messages.error(request, _("Please fix scoring form errors."))
+            messages.error(request, _("Please fix scoring input errors."))
 
         elif action == "add_treatment":
             if not _can_manage_risks(request.user):
@@ -1609,6 +1766,18 @@ def risk_detail(request, risk_id: int):
         "treatments": risk.treatments.all(),
         "reviews": risk.reviews.select_related("reviewer").all(),
         "approvals": risk.approvals.select_related("requested_by", "decided_by").all(),
+        "scoring_methods": list(
+            RiskScoringMethod.objects.filter(is_active=True)
+            .order_by("name")
+            .values(
+                "id",
+                "name",
+                "method_type",
+                "likelihood_weight",
+                "impact_weight",
+                "treatment_effectiveness_weight",
+            )
+        ),
         "linked_assets": linked_assets,
         "dependency_edges": dependency_edges,
         "linked_assets_json": linked_assets_json,
@@ -1616,6 +1785,7 @@ def risk_detail(request, risk_id: int):
         "link_form": link_form,
         "update_form": update_form,
         "scoring_form": scoring_form,
+        "scoring_inputs_form": scoring_inputs_form,
         "treatment_form": treatment_form,
         "review_form": review_form,
         "approval_request_form": approval_request_form,
@@ -1823,15 +1993,24 @@ def location_risk_overview(request):
     risks = risks.order_by("-created_at")
 
     by_section = (
-        risks.values("business_unit__code", "cost_center__code", "section__code")
+        risks.values(
+            "business_unit__code",
+            "business_unit__name",
+            "cost_center__code",
+            "cost_center__name",
+            "section__code",
+            "section__name",
+        )
         .annotate(
             total_risks=Count("id", distinct=True),
             open_risks=Count("id", filter=Q(status=Risk.STATUS_OPEN), distinct=True),
         )
-        .order_by("business_unit__code", "cost_center__code", "section__code")
+        .order_by("business_unit__name", "cost_center__name", "section__name")
     )
 
-    section_labels = [row["section__code"] or "-" for row in by_section]
+    section_labels = [
+        row["section__name"] or row["section__code"] or "-" for row in by_section
+    ]
     section_total_values = [row["total_risks"] for row in by_section]
     section_open_values = [row["open_risks"] for row in by_section]
 
@@ -3214,3 +3393,428 @@ def export_report_csv(request, report_key: str):
         request=request,
     )
     return response
+
+
+@login_required
+def critical_services(request):
+    query = request.GET.get("q", "").strip()
+    edit_id = request.POST.get("service_id") or request.GET.get("edit")
+    show_form = request.GET.get("new") == "1" or bool(request.GET.get("edit"))
+    services = CriticalService.objects.order_by("name")
+    if query:
+        services = services.filter(Q(code__icontains=query) | Q(name__icontains=query) | Q(owner__icontains=query))
+    paginator = Paginator(services, 20)
+    page_obj = paginator.get_page(request.GET.get("page"))
+
+    edit_instance = None
+    if edit_id:
+        edit_instance = CriticalService.objects.filter(id=edit_id).first()
+        show_form = True
+
+    form = CriticalServiceForm(prefix="service", data=request.POST or None, instance=edit_instance)
+
+    if request.method == "POST":
+        action = request.POST.get("action", "save")
+        return_q = request.POST.get("return_q", "").strip()
+        base_url = reverse("webui:critical-services")
+        redirect_target = f"{base_url}?q={return_q}" if return_q else base_url
+
+        if not _can_manage_risks(request.user):
+            messages.error(request, _("You do not have permission to manage risks."))
+            return redirect(redirect_target)
+
+        if action == "delete":
+            service_id = request.POST.get("service_id")
+            service = CriticalService.objects.filter(id=service_id).first()
+            if service:
+                create_audit_event(
+                    action="service.delete",
+                    entity_type="critical_service",
+                    entity_id=service.id,
+                    request=request,
+                )
+                service.delete()
+                messages.success(request, _("Service deleted."))
+            return redirect(redirect_target)
+
+        if form.is_valid():
+            service = form.save()
+            create_audit_event(
+                action="service.update" if edit_instance else "service.create",
+                entity_type="critical_service",
+                entity_id=service.id,
+                request=request,
+            )
+            messages.success(request, _("Service saved."))
+            return redirect(redirect_target)
+        messages.error(request, _("Please fix service form errors."))
+        show_form = True
+
+    return render(
+        request,
+        "webui/critical_services.html",
+        {
+            "services": page_obj,
+            "page_obj": page_obj,
+            "query": query,
+            "show_form": show_form,
+            "edit_instance": edit_instance,
+            "form": form,
+            **_permission_context(request.user),
+        },
+    )
+
+
+@login_required
+def bia_profiles(request):
+    query = request.GET.get("q", "").strip()
+    edit_id = request.POST.get("profile_id") or request.GET.get("edit")
+    show_form = request.GET.get("new") == "1" or bool(request.GET.get("edit"))
+    profiles = ServiceBIAProfile.objects.select_related("service").order_by("service__name")
+    if query:
+        profiles = profiles.filter(Q(service__name__icontains=query) | Q(service__code__icontains=query))
+    paginator = Paginator(profiles, 20)
+    page_obj = paginator.get_page(request.GET.get("page"))
+
+    edit_instance = None
+    if edit_id:
+        edit_instance = ServiceBIAProfile.objects.filter(id=edit_id).first()
+        show_form = True
+
+    form = ServiceBIAProfileForm(prefix="bia", data=request.POST or None, instance=edit_instance)
+
+    if request.method == "POST":
+        action = request.POST.get("action", "save")
+        return_q = request.POST.get("return_q", "").strip()
+        base_url = reverse("webui:bia-profiles")
+        redirect_target = f"{base_url}?q={return_q}" if return_q else base_url
+
+        if not _can_manage_risks(request.user):
+            messages.error(request, _("You do not have permission to manage risks."))
+            return redirect(redirect_target)
+
+        if action == "delete":
+            profile_id = request.POST.get("profile_id")
+            profile = ServiceBIAProfile.objects.filter(id=profile_id).first()
+            if profile:
+                create_audit_event(
+                    action="bia.delete",
+                    entity_type="service_bia_profile",
+                    entity_id=profile.id,
+                    request=request,
+                )
+                profile.delete()
+                messages.success(request, _("BIA profile deleted."))
+            return redirect(redirect_target)
+
+        if form.is_valid():
+            profile = form.save()
+            create_audit_event(
+                action="bia.update" if edit_instance else "bia.create",
+                entity_type="service_bia_profile",
+                entity_id=profile.id,
+                request=request,
+            )
+            messages.success(request, _("BIA profile saved."))
+            return redirect(redirect_target)
+        messages.error(request, _("Please fix BIA form errors."))
+        show_form = True
+
+    return render(
+        request,
+        "webui/bia_profiles.html",
+        {
+            "profiles": page_obj,
+            "page_obj": page_obj,
+            "query": query,
+            "show_form": show_form,
+            "edit_instance": edit_instance,
+            "form": form,
+            **_permission_context(request.user),
+        },
+    )
+
+
+@login_required
+def hazards(request):
+    query = request.GET.get("q", "").strip()
+    hazards_qs = Hazard.objects.order_by("name")
+    if query:
+        hazards_qs = hazards_qs.filter(Q(code__icontains=query) | Q(name__icontains=query))
+    paginator = Paginator(hazards_qs, 20)
+    page_obj = paginator.get_page(request.GET.get("page"))
+
+    if request.method == "POST":
+        action = request.POST.get("action", "delete")
+        return_q = request.POST.get("return_q", "").strip()
+        base_url = reverse("webui:hazards")
+        redirect_target = f"{base_url}?q={return_q}" if return_q else base_url
+
+        if not _can_manage_risks(request.user):
+            messages.error(request, _("You do not have permission to manage risks."))
+            return redirect(redirect_target)
+
+        if action == "delete":
+            hazard_id = request.POST.get("hazard_id")
+            hazard = Hazard.objects.filter(id=hazard_id).first()
+            if hazard:
+                create_audit_event(
+                    action="hazard.delete",
+                    entity_type="hazard",
+                    entity_id=hazard.id,
+                    request=request,
+                )
+                hazard.delete()
+                messages.success(request, _("Hazard deleted."))
+            return redirect(redirect_target)
+
+    return render(
+        request,
+        "webui/hazards.html",
+        {
+            "hazards": page_obj,
+            "page_obj": page_obj,
+            "query": query,
+            **_permission_context(request.user),
+        },
+    )
+
+
+@login_required
+def hazard_detail(request, hazard_id: Optional[int] = None):
+    edit_link_id = request.POST.get("link_id") or request.GET.get("edit_link")
+    edit_instance = None
+    if hazard_id:
+        edit_instance = Hazard.objects.filter(id=hazard_id).first()
+
+    link_instance = None
+    if edit_link_id:
+        link_instance = HazardLink.objects.filter(id=edit_link_id).first()
+        if link_instance:
+            edit_instance = edit_instance or link_instance.hazard
+
+    form = HazardForm(prefix="hazard", data=request.POST or None, instance=edit_instance)
+    link_form = HazardLinkForm(
+        prefix="hazard_link",
+        data=request.POST or None,
+        instance=link_instance,
+        hazard=(edit_instance or (link_instance.hazard if link_instance else None)),
+    )
+    hazard_links = HazardLink.objects.select_related("hazard", "asset", "service").order_by("-created_at")
+    if edit_instance:
+        hazard_links = hazard_links.filter(hazard=edit_instance)
+
+    if request.method == "POST":
+        action = request.POST.get("action", "save")
+        if not _can_manage_risks(request.user):
+            messages.error(request, _("You do not have permission to manage risks."))
+            return redirect(reverse("webui:hazards"))
+
+        if action == "link_hazard":
+            if link_form.is_valid():
+                link = link_form.save()
+                create_audit_event(
+                    action="hazard.link.create",
+                    entity_type="hazard_link",
+                    entity_id=link.id,
+                    request=request,
+                )
+                messages.success(request, _("Hazard link saved."))
+                return redirect(reverse("webui:hazard-detail", kwargs={"hazard_id": link.hazard_id}))
+            messages.error(request, _("Please fix hazard link form errors."))
+
+        if action == "delete_link":
+            link_id = request.POST.get("link_id")
+            link = HazardLink.objects.filter(id=link_id).first()
+            if link:
+                hazard_target = link.hazard_id
+                create_audit_event(
+                    action="hazard.link.delete",
+                    entity_type="hazard_link",
+                    entity_id=link.id,
+                    request=request,
+                )
+                link.delete()
+                messages.success(request, _("Hazard link deleted."))
+                return redirect(reverse("webui:hazard-detail", kwargs={"hazard_id": hazard_target}))
+
+        if action == "save":
+            if form.is_valid():
+                hazard = form.save()
+                create_audit_event(
+                    action="hazard.update" if edit_instance else "hazard.create",
+                    entity_type="hazard",
+                    entity_id=hazard.id,
+                    request=request,
+                )
+                messages.success(request, _("Hazard saved."))
+                return redirect(reverse("webui:hazard-detail", kwargs={"hazard_id": hazard.id}))
+            messages.error(request, _("Please fix hazard form errors."))
+
+    return render(
+        request,
+        "webui/hazard_detail.html",
+        {
+            "edit_instance": edit_instance,
+            "form": form,
+            "link_form": link_form,
+            "hazard_links": hazard_links[:50],
+            **_permission_context(request.user),
+        },
+    )
+
+
+@login_required
+def scenarios(request):
+    query = request.GET.get("q", "").strip()
+    edit_id = request.POST.get("scenario_id") or request.GET.get("edit")
+    simulate_id = request.GET.get("simulate")
+    duration_override = request.GET.get("duration")
+    show_form = request.GET.get("new") == "1" or bool(request.GET.get("edit"))
+    scenarios_qs = Scenario.objects.select_related("hazard").order_by("-created_at")
+    if query:
+        scenarios_qs = scenarios_qs.filter(Q(name__icontains=query) | Q(hazard__name__icontains=query))
+    paginator = Paginator(scenarios_qs, 20)
+    page_obj = paginator.get_page(request.GET.get("page"))
+
+    edit_instance = None
+    if edit_id:
+        edit_instance = Scenario.objects.filter(id=edit_id).first()
+        show_form = True
+
+    form = ScenarioForm(prefix="scenario", data=request.POST or None, instance=edit_instance)
+    simulation_result = None
+
+    if simulate_id:
+        if not _can_manage_risks(request.user):
+            messages.error(request, _("You do not have permission to manage risks."))
+        else:
+            scenario = Scenario.objects.select_related("hazard").filter(id=simulate_id).first()
+            if scenario:
+                duration_hours = None
+                if duration_override:
+                    try:
+                        duration_hours = int(duration_override)
+                    except ValueError:
+                        messages.error(request, _("Duration must be a number of hours."))
+                simulation_result = simulate_scenario(scenario, duration_hours=duration_hours)
+            else:
+                messages.error(request, _("Scenario not found."))
+
+    if request.method == "POST":
+        action = request.POST.get("action", "save")
+        return_q = request.POST.get("return_q", "").strip()
+        base_url = reverse("webui:scenarios")
+        redirect_target = f"{base_url}?q={return_q}" if return_q else base_url
+
+        if not _can_manage_risks(request.user):
+            messages.error(request, _("You do not have permission to manage risks."))
+            return redirect(redirect_target)
+
+        if action == "delete":
+            scenario_id = request.POST.get("scenario_id")
+            scenario = Scenario.objects.filter(id=scenario_id).first()
+            if scenario:
+                create_audit_event(
+                    action="scenario.delete",
+                    entity_type="scenario",
+                    entity_id=scenario.id,
+                    request=request,
+                )
+                scenario.delete()
+                messages.success(request, _("Scenario deleted."))
+            return redirect(redirect_target)
+
+        if form.is_valid():
+            scenario = form.save()
+            create_audit_event(
+                action="scenario.update" if edit_instance else "scenario.create",
+                entity_type="scenario",
+                entity_id=scenario.id,
+                request=request,
+            )
+            messages.success(request, _("Scenario saved."))
+            return redirect(redirect_target)
+        messages.error(request, _("Please fix scenario form errors."))
+        show_form = True
+
+    return render(
+        request,
+        "webui/scenarios.html",
+        {
+            "scenarios": page_obj,
+            "page_obj": page_obj,
+            "query": query,
+            "show_form": show_form,
+            "edit_instance": edit_instance,
+            "form": form,
+            "simulation_result": simulation_result,
+            "duration_override": duration_override or "",
+            **_permission_context(request.user),
+        },
+    )
+
+
+@login_required
+def continuity_strategies(request):
+    items = ContinuityStrategy.objects.select_related("service", "bia_profile", "scenario").order_by("code")
+    query = request.GET.get("q", "").strip()
+    show_form = request.GET.get("new") == "1"
+    edit_id = request.GET.get("edit")
+    edit_instance = None
+    if edit_id:
+        edit_instance = ContinuityStrategy.objects.filter(id=edit_id).first()
+        show_form = True
+
+    if query:
+        items = items.filter(
+            Q(code__icontains=query)
+            | Q(name__icontains=query)
+            | Q(service__name__icontains=query)
+        )
+
+    page_number = request.GET.get("page", "1")
+    paginator = Paginator(items, 20)
+    page_obj = paginator.get_page(page_number)
+
+    form = ContinuityStrategyForm(prefix="continuity", data=request.POST or None, instance=edit_instance)
+
+    if request.method == "POST":
+        action = request.POST.get("action")
+        redirect_target = reverse("webui:continuity-strategies")
+
+        if action == "delete":
+            if not _can_manage_risks(request.user):
+                messages.error(request, _("You do not have permission to manage risks."))
+                return redirect(redirect_target)
+            strategy_id = request.POST.get("strategy_id")
+            strategy = ContinuityStrategy.objects.filter(id=strategy_id).first()
+            if strategy:
+                strategy.delete()
+                messages.success(request, _("Continuity strategy deleted."))
+            return redirect(redirect_target)
+
+        if action == "save":
+            if not _can_manage_risks(request.user):
+                messages.error(request, _("You do not have permission to manage risks."))
+                return redirect(redirect_target)
+            if form.is_valid():
+                strategy = form.save()
+                messages.success(request, _("Continuity strategy saved."))
+                return redirect(redirect_target)
+            messages.error(request, _("Please fix continuity strategy form errors."))
+            show_form = True
+
+    return render(
+        request,
+        "webui/continuity_strategies.html",
+        {
+            "strategies": page_obj,
+            "page_obj": page_obj,
+            "query": query,
+            "show_form": show_form,
+            "edit_instance": edit_instance,
+            "form": form,
+            **_permission_context(request.user),
+        },
+    )

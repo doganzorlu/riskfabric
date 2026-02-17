@@ -31,13 +31,13 @@
       <tr>
         <td>{{ asset.asset_code }}</td>
         <td>{{ asset.asset_name }}</td>
-        <td>{% if asset.business_unit %}{{ asset.business_unit.code }}{% endif %}</td>
-        <td>{% if asset.cost_center %}{{ asset.cost_center.code }}{% endif %}</td>
-        <td>{% if asset.section %}{{ asset.section.code }}{% endif %}</td>
+        <td>{% if asset.business_unit %}{{ asset.business_unit.name }}{% endif %}</td>
+        <td>{% if asset.cost_center %}{{ asset.cost_center.name }}{% endif %}</td>
+        <td>{% if asset.section %}{{ asset.section.name }}{% endif %}</td>
         <td>{% if asset.parent_asset %}{{ asset.parent_asset.asset_code }}{% endif %}</td>
-        <td>{% if asset.asset_type %}{{ asset.asset_type.code }}{% endif %}</td>
-        <td>{% if asset.asset_status %}{{ asset.asset_status.code }}{% endif %}</td>
-        <td>{% if asset.asset_group %}{{ asset.asset_group.code }}{% endif %}</td>
+        <td>{% if asset.asset_type %}{{ asset.asset_type.name }}{% endif %}</td>
+        <td>{% if asset.asset_status %}{{ asset.asset_status.name }}{% endif %}</td>
+        <td>{% if asset.asset_group %}{{ asset.asset_group.name }}{% endif %}</td>
       </tr>
       {% empty %}
       <tr><td colspan="9">{% trans "No assets found." %}</td></tr>
@@ -45,13 +45,13 @@
     </tbody>
   </table>
   {% if page_obj %}
-  <div class="actions" style="margin-top: 12px;">
+  <div class="actions" style="margin-top: 12px; justify-content: flex-end;">
     {% if page_obj.has_previous %}
-      <a href="?q={{ query }}&page={{ page_obj.previous_page_number }}">{% trans "Previous" %}</a>
+      <a class="btn btn-outline-secondary btn-sm" href="?q={{ query }}&page={{ page_obj.previous_page_number }}">{% trans "Previous" %}</a>
     {% endif %}
     <span class="muted">{% trans "Page" %} {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
     {% if page_obj.has_next %}
-      <a href="?q={{ query }}&page={{ page_obj.next_page_number }}">{% trans "Next" %}</a>
+      <a class="btn btn-outline-secondary btn-sm" href="?q={{ query }}&page={{ page_obj.next_page_number }}">{% trans "Next" %}</a>
     {% endif %}
   </div>
   {% endif %}

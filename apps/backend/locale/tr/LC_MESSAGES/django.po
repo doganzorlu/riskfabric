@@ -97,9 +97,6 @@ msgstr "Kısım"
 msgid "Parent"
 msgstr "Üst"
 
-msgid "Type"
-msgstr "Tür"
-
 msgid "Group"
 msgstr "Grup"
 
@@ -409,9 +406,6 @@ msgstr "Frekans"
 msgid "ID"
 msgstr "ID"
 
-msgid "Impact"
-msgstr "Etki"
-
 msgid "Impact \\ Likelihood"
 msgstr "Etki \\ Olasılık"
 
@@ -441,6 +435,21 @@ msgstr "Olasılık"
 
 msgid "Linked Assets"
 msgstr "Bağlı Varlıklar"
+
+msgid "Add Assets"
+msgstr "Varlık Ekle"
+
+msgid "Add Selected Assets"
+msgstr "Seçilen Varlıkları Ekle"
+
+msgid "Search Assets"
+msgstr "Varlık Ara"
+
+msgid "Type to filter assets"
+msgstr "Varlıklar için filtre yazın"
+
+msgid "Select assets to add to this risk."
+msgstr "Bu riske eklenecek varlıkları seçin."
 
 msgid "Loading..."
 msgstr "Yükleniyor..."
@@ -678,6 +687,30 @@ msgstr "Planlar"
 
 msgid "Scoring History"
 msgstr "Skorlama Geçmişi"
+
+msgid "Scoring Details"
+msgstr "Skorlama Detayları"
+
+msgid "Selected scoring method and weights used in calculation."
+msgstr "Seçili skorlama yöntemi ve hesaplamada kullanılan ağırlıklar."
+
+msgid "Risk Actions"
+msgstr "Risk Aksiyonları"
+
+msgid "Method"
+msgstr "Yöntem"
+
+msgid "Type"
+msgstr "Tür"
+
+msgid "Likelihood Weight"
+msgstr "Olasılık Ağırlığı"
+
+msgid "Impact Weight"
+msgstr "Etki Ağırlığı"
+
+msgid "Treatment Effectiveness Weight"
+msgstr "Tedbir Etkinliği Ağırlığı"
 
 msgid "Select risks above to apply changes."
 msgstr "Değişiklikleri uygulamak için yukarıdaki riskleri seçin."
@@ -973,6 +1006,84 @@ msgstr "Kontrol Testi"
 msgid "Compliance"
 msgstr "Uyumluluk"
 
+msgid "Resilience"
+msgstr "Dayanıklılık"
+
+msgid "BIA"
+msgstr "BİA"
+
+msgid "Hazards"
+msgstr "Tehlikeler"
+
+msgid "Scenarios"
+msgstr "Senaryolar"
+
+msgid "Continuity Strategies"
+msgstr "Süreklilik Stratejileri"
+
+msgid "Capture continuity plans tied to services and recovery objectives."
+msgstr "Hizmetlere ve kurtarma hedeflerine bağlı süreklilik planlarını yönetin."
+
+msgid "Code, name, service"
+msgstr "Kod, ad, hizmet"
+
+msgid "Search Continuity Strategies"
+msgstr "Süreklilik Stratejilerini Ara"
+
+msgid "New Continuity Strategy"
+msgstr "Yeni Süreklilik Stratejisi"
+
+msgid "Edit Continuity Strategy"
+msgstr "Süreklilik Stratejisini Düzenle"
+
+msgid "Save Continuity Strategy"
+msgstr "Süreklilik Stratejisini Kaydet"
+
+msgid "Continuity Strategy Catalog"
+msgstr "Süreklilik Stratejisi Kataloğu"
+
+msgid "Readiness"
+msgstr "Hazırlık"
+
+msgid "Delete this continuity strategy?"
+msgstr "Bu süreklilik stratejisi silinsin mi?"
+
+msgid "No continuity strategies found."
+msgstr "Süreklilik stratejisi bulunamadı."
+
+msgid "Continuity strategy saved."
+msgstr "Süreklilik stratejisi kaydedildi."
+
+msgid "Continuity strategy deleted."
+msgstr "Süreklilik stratejisi silindi."
+
+msgid "Please fix continuity strategy form errors."
+msgstr "Lütfen süreklilik stratejisi formu hatalarını düzeltin."
+
+msgid "Redundancy"
+msgstr "Yedeklilik"
+
+msgid "Backup"
+msgstr "Yedekleme"
+
+msgid "Manual"
+msgstr "Manuel"
+
+msgid "Vendor"
+msgstr "Tedarikçi"
+
+msgid "Workaround"
+msgstr "Geçici Çözüm"
+
+msgid "Planned"
+msgstr "Planlandı"
+
+msgid "Ready"
+msgstr "Hazır"
+
+msgid "Tested"
+msgstr "Test Edildi"
+
 msgid "System Parameters"
 msgstr "Sistem Parametreleri"
 
@@ -1192,6 +1303,57 @@ msgstr "Lütfen uyumluluk gereksinimi formu hatalarını düzeltin."
 msgid "Reports"
 msgstr "Raporlar"
 
+msgid "Define essential services, map supporting processes, and link assets."
+msgstr "Kritik hizmetleri tanımlayın, süreçleri eşleyin ve varlıkları bağlayın."
+
+msgid "Coming Next"
+msgstr "Yakında"
+
+msgid "Service catalog with owners and status."
+msgstr "Sahip ve durum bilgileriyle hizmet kataloğu."
+
+msgid "Process mapping (Service -> Process -> Assets)."
+msgstr "Süreç eşleme (Hizmet -> Süreç -> Varlıklar)."
+
+msgid "Service-level risk and impact context."
+msgstr "Hizmet seviyesinde risk ve etki bağlamı."
+
+msgid "Define escalation curves, MAO/MTPD, RTO, and RPO per critical service."
+msgstr "Kritik hizmet başına eskalasyon eğrileri, MAO/MTPD, RTO ve RPO tanımlayın."
+
+msgid "BIA profiles per service."
+msgstr "Hizmet başına BİA profilleri."
+
+msgid "Time-based escalation thresholds by impact category."
+msgstr "Etki kategorisine göre zamana bağlı eskalasyon eşikleri."
+
+msgid "Reports for service-level recovery objectives."
+msgstr "Hizmet seviyesinde kurtarma hedefleri için raporlar."
+
+msgid "Model natural, industrial, utility, and cyber hazards and link them to services and assets."
+msgstr "Doğal, endüstriyel, altyapı ve siber tehlikeleri modelleyin; hizmet ve varlıklara bağlayın."
+
+msgid "Hazard library with default likelihood."
+msgstr "Varsayılan olasılık ile tehlike kütüphanesi."
+
+msgid "Hazard links to locations, assets, and services."
+msgstr "Tehlikelerin lokasyon, varlık ve hizmet bağlantıları."
+
+msgid "Scenario inputs for simulation."
+msgstr "Simülasyon için senaryo girdileri."
+
+msgid "Simulate hazards over time and trace cascading failures across dependencies."
+msgstr "Tehlikeleri zamana göre simüle edin ve bağımlılıklarda zincirleme etkileri izleyin."
+
+msgid "Scenario builder with hazard, duration, and scope."
+msgstr "Tehlike, süre ve kapsam içeren senaryo oluşturucu."
+
+msgid "Propagation results: affected assets and services."
+msgstr "Yayılım sonuçları: etkilenen varlıklar ve hizmetler."
+
+msgid "Time-weighted impact summary."
+msgstr "Zamana ağırlıklı etki özeti."
+
 msgid "Reports Overview"
 msgstr "Raporlara Genel Bakış"
 
@@ -1214,7 +1376,7 @@ msgid "Severity and status tracking."
 msgstr "Şiddet ve durum takibi."
 
 msgid "Framework requirement coverage."
-msgstr "Çerçeve gereksinim kapsaması."
+msgstr "Çerçeve gereksinim kapsamı."
 
 msgid "Search Assessment Reports"
 msgstr "Değerlendirme Raporlarını Ara"
@@ -1253,7 +1415,7 @@ msgid "Compliance Status Distribution"
 msgstr "Uyumluluk Durum Dağılımı"
 
 msgid "Unknown report export."
-msgstr "Bilinmeyen rapor dışa aktarma."
+msgstr "Bilinmeyen rapor dışa aktarımı."
 
 msgid "You do not have permission to export compliance data."
 msgstr "Uyumluluk verilerini dışa aktarma yetkiniz yok."
@@ -1271,7 +1433,7 @@ msgid "Title cannot be empty."
 msgstr "Başlık boş olamaz."
 
 msgid "Owner is required when risk status is In Progress."
-msgstr "Risk durumu Devam Ediyor iken sorumlu zorunludur."
+msgstr "Risk durumu \"Devam Ediyor\" iken sorumlu zorunludur."
 
 msgid "Due date cannot be in the past unless risk is Closed."
 msgstr "Risk Kapalı değilse bitiş tarihi geçmişte olamaz."
@@ -1289,7 +1451,7 @@ msgid "Primary asset must not be duplicated in additional assets."
 msgstr "Birincil varlık ek varlıklar arasında tekrar edemez."
 
 msgid "Select additional assets linked to this risk."
-msgstr "Bu riskle ilişkili ek varlıkları seçin."
+msgstr "Bu riske eklenecek varlıkları seçin."
 
 msgid "You do not have access to one or more selected assets."
 msgstr "Seçilen varlıklardan bir veya daha fazlasına erişiminiz yok."
@@ -1444,6 +1606,39 @@ msgstr "Test Tarihi"
 msgid "Tester"
 msgstr "Test Eden"
 
+msgid "Plan"
+msgstr "Plan"
+
+msgid "Tested at"
+msgstr "Test Tarihi"
+
+msgid "Result"
+msgstr "Sonuç"
+
+msgid "Effectiveness score"
+msgstr "Etkinlik puanı"
+
+msgid "Quarterly"
+msgstr "Üç Aylık"
+
+msgid "Semi-Annual"
+msgstr "Altı Aylık"
+
+msgid "Annual"
+msgstr "Yıllık"
+
+msgid "Pass"
+msgstr "Başarılı"
+
+msgid "Fail"
+msgstr "Başarısız"
+
+msgid "Inconclusive"
+msgstr "Sonuçsuz"
+
+msgid "Next due date"
+msgstr "Bir sonraki tarih"
+
 msgid "Delete this test run?"
 msgstr "Bu test koşusu silinsin mi?"
 
@@ -1471,5 +1666,460 @@ msgstr "Test koşusu silindi."
 msgid "Test run saved."
 msgstr "Test koşusu kaydedildi."
 
+msgid "Objective"
+msgstr "Amaç"
+
+msgid "Review date"
+msgstr "Gözden geçirme tarihi"
+
+msgid "Effective date"
+msgstr "Yürürlük tarihi"
+
+msgid "Framework"
+msgstr "Çerçeve"
+
+msgid "Requirement"
+msgstr "Gereksinim"
+
+msgid "Description"
+msgstr "Açıklama"
+
+msgid "Evidence"
+msgstr "Kanıt"
+
+msgid "Last reviewed"
+msgstr "Son gözden geçirme"
+
+msgid "Life critical"
+msgstr "Hayati kritik"
+
+msgid "Environment critical"
+msgstr "Çevresel kritik"
+
+msgid "Infrastructure critical"
+msgstr "Altyapı kritik"
+
+msgid "Business critical"
+msgstr "İş kritik"
+
+msgid "Support service"
+msgstr "Destek hizmeti"
+
+msgid "Service criticality"
+msgstr "Hizmet kritikliği"
+
+msgid "Operational impact"
+msgstr "Operasyonel etki"
+
+msgid "Financial impact"
+msgstr "Finansal etki"
+
+msgid "Environmental impact"
+msgstr "Çevresel etki"
+
+msgid "Safety impact"
+msgstr "Güvenlik etkisi"
+
+msgid "Legal impact"
+msgstr "Hukuki etki"
+
+msgid "Reputation impact"
+msgstr "İtibar etkisi"
+
+msgid "Impact escalation curve"
+msgstr "Etki yükselme eğrisi"
+
+msgid "Crisis trigger rules"
+msgstr "Kriz tetikleme kuralları"
+
+msgid "Service Criticality"
+msgstr "Hizmet Kritikliği"
+
+msgid "Impact Dimensions (0-5)"
+msgstr "Etki Boyutları (0-5)"
+
+msgid "Escalation Timeline Editor"
+msgstr "Eskalasyon Zaman Çizelgesi"
+
+msgid "Define time thresholds in minutes with ordered impact levels."
+msgstr "Dakika bazında eşik süreleri ve sıralı etki seviyeleri tanımlayın."
+
+msgid "Time (minutes)"
+msgstr "Süre (dakika)"
+
+msgid "Impact Level"
+msgstr "Etki Seviyesi"
+
+msgid "Add step"
+msgstr "Adım ekle"
+
+msgid "Crisis Trigger Configuration"
+msgstr "Kriz Tetikleme Yapılandırması"
+
+msgid "Use JSON rules to define crisis recommendation conditions."
+msgstr "Kriz önerisi koşullarını JSON kurallarıyla tanımlayın."
+
+msgid "Time Thresholds"
+msgstr "Zaman Eşikleri"
+
+msgid "Impact Dimensions"
+msgstr "Etki Boyutları"
+
+msgid "Escalation & Crisis Rules"
+msgstr "Eskalasyon ve Kriz Kuralları"
+
+msgid "JSON array of steps with time_minutes and level."
+msgstr "time_minutes ve level içeren JSON adımları dizisi."
+
+msgid "JSON object with crisis trigger thresholds."
+msgstr "Kriz tetikleyici eşikleri içeren JSON nesnesi."
+
 msgid "Please fix test run form errors."
 msgstr "Lütfen test koşusu formu hatalarını düzeltin."
+
+msgid "Critical Services"
+msgstr "Kritik Hizmetler"
+
+msgid "Search Critical Services"
+msgstr "Kritik Hizmetleri Ara"
+
+msgid "Code, name, owner"
+msgstr "Kod, ad, sahip"
+
+msgid "New Critical Service"
+msgstr "Yeni Kritik Hizmet"
+
+msgid "Edit Critical Service"
+msgstr "Kritik Hizmeti Düzenle"
+
+msgid "Save Critical Service"
+msgstr "Kritik Hizmeti Kaydet"
+
+msgid "Service Catalog"
+msgstr "Hizmet Kataloğu"
+
+msgid "Delete this service?"
+msgstr "Bu hizmet silinsin mi?"
+
+msgid "No services found."
+msgstr "Hizmet bulunamadı."
+
+msgid "Service saved."
+msgstr "Hizmet kaydedildi."
+
+msgid "Service deleted."
+msgstr "Hizmet silindi."
+
+msgid "Please fix service form errors."
+msgstr "Hizmet formu hatalarını düzeltin."
+
+msgid "Business Impact Analysis (BIA)"
+msgstr "İş Etki Analizi (BİA)"
+
+msgid "Service name or code"
+msgstr "Hizmet adı veya kodu"
+
+msgid "Search BIA Profiles"
+msgstr "BİA Profillerini Ara"
+
+msgid "New BIA Profile"
+msgstr "Yeni BİA Profili"
+
+msgid "Edit BIA Profile"
+msgstr "BİA Profilini Düzenle"
+
+msgid "Save BIA Profile"
+msgstr "BİA Profilini Kaydet"
+
+msgid "BIA Profiles"
+msgstr "BİA Profilleri"
+
+msgid "MAO/MTPD (h)"
+msgstr "MAO/MTPD (s)"
+
+msgid "RTO (h)"
+msgstr "RTO (s)"
+
+msgid "RPO (h)"
+msgstr "RPO (s)"
+
+msgid "Delete this BIA profile?"
+msgstr "Bu BİA profili silinsin mi?"
+
+msgid "No BIA profiles found."
+msgstr "BİA profili bulunamadı."
+
+msgid "BIA profile saved."
+msgstr "BİA profili kaydedildi."
+
+msgid "BIA profile deleted."
+msgstr "BİA profili silindi."
+
+msgid "Please fix BIA form errors."
+msgstr "BİA formu hatalarını düzeltin."
+
+msgid "Code or name"
+msgstr "Kod veya ad"
+
+msgid "Search Hazards"
+msgstr "Tehlikeleri Ara"
+
+msgid "New Hazard"
+msgstr "Yeni Tehlike"
+
+msgid "Edit Hazard"
+msgstr "Tehlikeyi Düzenle"
+
+msgid "Save Hazard"
+msgstr "Tehlikeyi Kaydet"
+
+msgid "Hazard Library"
+msgstr "Tehlike Kütüphanesi"
+
+msgid "Hazard Links"
+msgstr "Tehlike Bağlantıları"
+
+msgid "Save Hazard Link"
+msgstr "Tehlike Bağlantısını Kaydet"
+
+msgid "Select a hazard to manage links."
+msgstr "Bağlantıları yönetmek için bir tehlike seçin."
+
+msgid "Impact Multiplier"
+msgstr "Etki Çarpanı"
+
+msgid "Delete this hazard link?"
+msgstr "Bu tehlike bağlantısı silinsin mi?"
+
+msgid "No hazard links found."
+msgstr "Tehlike bağlantısı bulunamadı."
+
+msgid "Hazard link saved."
+msgstr "Tehlike bağlantısı kaydedildi."
+
+msgid "Hazard link deleted."
+msgstr "Tehlike bağlantısı silindi."
+
+msgid "Please fix hazard link form errors."
+msgstr "Lütfen tehlike bağlantı formu hatalarını düzeltin."
+
+msgid "Select an asset or service to link."
+msgstr "Bağlamak için bir varlık veya hizmet seçin."
+msgid "Delete this hazard?"
+msgstr "Bu tehlike silinsin mi?"
+
+msgid "No hazards found."
+msgstr "Tehlike bulunamadı."
+
+msgid "Hazard saved."
+msgstr "Tehlike kaydedildi."
+
+msgid "Hazard deleted."
+msgstr "Tehlike silindi."
+
+msgid "Please fix hazard form errors."
+msgstr "Tehlike formu hatalarını düzeltin."
+
+msgid "Scenario name or hazard"
+msgstr "Senaryo adı veya tehlike"
+
+msgid "Search Scenarios"
+msgstr "Senaryoları Ara"
+
+msgid "New Scenario"
+msgstr "Yeni Senaryo"
+
+msgid "Edit Scenario"
+msgstr "Senaryoyu Düzenle"
+
+msgid "Save Scenario"
+msgstr "Senaryoyu Kaydet"
+
+msgid "Scenario Library"
+msgstr "Senaryo Kütüphanesi"
+
+msgid "Duration (h)"
+msgstr "Süre (s)"
+
+msgid "Delete this scenario?"
+msgstr "Bu senaryo silinsin mi?"
+
+msgid "No scenarios found."
+msgstr "Senaryo bulunamadı."
+
+msgid "Scenario saved."
+msgstr "Senaryo kaydedildi."
+
+msgid "Scenario deleted."
+msgstr "Senaryo silindi."
+
+msgid "Please fix scenario form errors."
+msgstr "Senaryo formu hatalarını düzeltin."
+
+msgid "Simulation Results"
+msgstr "Simülasyon Sonuçları"
+
+msgid "Scenario"
+msgstr "Senaryo"
+
+msgid "Hazard"
+msgstr "Tehlike"
+
+msgid "Failed assets"
+msgstr "Etkilenen varlıklar"
+
+msgid "Service"
+msgstr "Hizmet"
+
+msgid "Impact"
+msgstr "Etki"
+
+msgid "No BIA profile"
+msgstr "BİA profili yok"
+
+msgid "No impacted services found."
+msgstr "Etkilenen hizmet bulunamadı."
+
+msgid "Simulate"
+msgstr "Simüle Et"
+
+msgid "Duration must be a number of hours."
+msgstr "Süre saat cinsinden bir sayı olmalıdır."
+
+msgid "Scenario not found."
+msgstr "Senaryo bulunamadı."
+
+msgid "Update Scoring Inputs"
+msgstr "Skorlama Girdilerini Güncelle"
+
+msgid "Save Scoring Inputs"
+msgstr "Skorlama Girdilerini Kaydet"
+
+msgid "Score using"
+msgstr "Skorla"
+
+msgid "CIA requires confidentiality, integrity, and availability values."
+msgstr "CIA için gizlilik, bütünlük ve erişilebilirlik değerleri gerekir."
+
+msgid "DREAD requires all DREAD factors."
+msgstr "DREAD için tüm DREAD faktörleri gerekir."
+
+msgid "OWASP requires all threat, vulnerability, and impact factors."
+msgstr "OWASP için tehdit, zafiyet ve etki faktörlerinin tamamı gerekir."
+
+msgid "CVSS requires all base, temporal, and environmental factors."
+msgstr "CVSS için temel, zamansal ve çevresel faktörlerin tamamı gerekir."
+
+msgid "Provide likelihood and impact for this scoring method."
+msgstr "Bu skorlama yöntemi için olasılık ve etki girin."
+
+msgid "You do not have permission to update scoring inputs."
+msgstr "Skorlama girdilerini güncelleme yetkiniz yok."
+
+msgid "Scoring inputs updated."
+msgstr "Skorlama girdileri güncellendi."
+
+msgid "Please fix scoring input errors."
+msgstr "Lütfen skorlama girdisi hatalarını düzeltin."
+
+msgid "Damage"
+msgstr "Hasar"
+
+msgid "Reproducibility"
+msgstr "Tekrarlanabilirlik"
+
+msgid "Exploitability"
+msgstr "Sömürülebilirlik"
+
+msgid "Affected Users"
+msgstr "Etkilenen Kullanıcılar"
+
+msgid "Discoverability"
+msgstr "Keşfedilebilirlik"
+
+msgid "Skill Level"
+msgstr "Yetenek Düzeyi"
+
+msgid "Motive"
+msgstr "Motivasyon"
+
+msgid "Opportunity"
+msgstr "Fırsat"
+
+msgid "Size"
+msgstr "Ölçek"
+
+msgid "Ease of Discovery"
+msgstr "Keşfetme Kolaylığı"
+
+msgid "Ease of Exploit"
+msgstr "Sömürme Kolaylığı"
+
+msgid "Awareness"
+msgstr "Farkındalık"
+
+msgid "Intrusion Detection"
+msgstr "Saldırı Tespiti"
+
+msgid "Loss of Confidentiality"
+msgstr "Gizlilik Kaybı"
+
+msgid "Loss of Integrity"
+msgstr "Bütünlük Kaybı"
+
+msgid "Loss of Availability"
+msgstr "Erişilebilirlik Kaybı"
+
+msgid "Loss of Accountability"
+msgstr "Hesap Verebilirlik Kaybı"
+
+msgid "Financial Damage"
+msgstr "Finansal Zarar"
+
+msgid "Reputation Damage"
+msgstr "İtibar Zedelenmesi"
+
+msgid "Non-Compliance"
+msgstr "Uyumsuzluk"
+
+msgid "Privacy Violation"
+msgstr "Mahremiyet İhlali"
+
+msgid "Attack Vector"
+msgstr "Saldırı Vektörü"
+
+msgid "Attack Complexity"
+msgstr "Saldırı Karmaşıklığı"
+
+msgid "Authentication"
+msgstr "Kimlik Doğrulama"
+
+msgid "Confidentiality Impact"
+msgstr "Gizlilik Etkisi"
+
+msgid "Integrity Impact"
+msgstr "Bütünlük Etkisi"
+
+msgid "Availability Impact"
+msgstr "Erişilebilirlik Etkisi"
+
+msgid "Remediation Level"
+msgstr "Düzeltme Seviyesi"
+
+msgid "Report Confidence"
+msgstr "Rapor Güveni"
+
+msgid "Collateral Damage Potential"
+msgstr "İkincil Zarar Potansiyeli"
+
+msgid "Target Distribution"
+msgstr "Hedef Dağılımı"
+
+msgid "Confidentiality Requirement"
+msgstr "Gizlilik Gereksinimi"
+
+msgid "Integrity Requirement"
+msgstr "Bütünlük Gereksinimi"
+
+msgid "Availability Requirement"
+msgstr "Erişilebilirlik Gereksinimi"

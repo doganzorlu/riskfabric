@@ -20,7 +20,7 @@
     </div>
     <div class="actions">
       <button type="submit" class="btn btn-primary">{% trans "Filter" %}</button>
-      {% if can_manage_risks %}
+      {% if can_manage_compliance %}
         <a href="?q={{ query }}&plan_id={{ plan_filter }}&new=1" class="btn btn-success">{% trans "New Test Run" %}</a>
       {% endif %}
       <a href="{% url 'webui:control-tests' %}" class="btn btn-outline-secondary">{% trans "Back to Test Plans" %}</a>
@@ -31,7 +31,7 @@
 {% if show_form %}
 <div class="card">
   <h2>{% if edit_instance %}{% trans "Edit Test Run" %}{% else %}{% trans "New Test Run" %}{% endif %}</h2>
-  {% if can_manage_risks %}
+  {% if can_manage_compliance %}
   <form method="post">
     {% csrf_token %}
     <input type="hidden" name="action" value="save" />
@@ -75,7 +75,7 @@
         <td>{{ run.tester }}</td>
         <td class="actions">
           <a href="?q={{ query }}&plan_id={{ plan_filter }}&edit={{ run.id }}" class="btn btn-outline-secondary btn-sm">{% trans "Edit" %}</a>
-          {% if can_manage_risks %}
+          {% if can_manage_compliance %}
           <form method="post" style="display:inline;" onsubmit="return confirm('{% trans "Delete this test run?" %}');">
             {% csrf_token %}
             <input type="hidden" name="action" value="delete" />
@@ -93,13 +93,13 @@
     </tbody>
   </table>
   {% if page_obj %}
-  <div class="actions" style="margin-top: 12px;">
+  <div class="actions" style="margin-top: 12px; justify-content: flex-end;">
     {% if page_obj.has_previous %}
-      <a href="?q={{ query }}&plan_id={{ plan_filter }}&page={{ page_obj.previous_page_number }}">{% trans "Previous" %}</a>
+      <a class="btn btn-outline-secondary btn-sm" href="?q={{ query }}&plan_id={{ plan_filter }}&page={{ page_obj.previous_page_number }}">{% trans "Previous" %}</a>
     {% endif %}
     <span class="muted">{% trans "Page" %} {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
     {% if page_obj.has_next %}
-      <a href="?q={{ query }}&plan_id={{ plan_filter }}&page={{ page_obj.next_page_number }}">{% trans "Next" %}</a>
+      <a class="btn btn-outline-secondary btn-sm" href="?q={{ query }}&plan_id={{ plan_filter }}&page={{ page_obj.next_page_number }}">{% trans "Next" %}</a>
     {% endif %}
   </div>
   {% endif %}

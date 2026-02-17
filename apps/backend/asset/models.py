@@ -109,6 +109,9 @@ class Asset(models.Model):
     is_mobile_equipment = models.BooleanField(default=False)
     default_work_type = models.CharField(max_length=128, blank=True)
     integration_source = models.CharField(max_length=64, default="eam")
+    geo_zone = models.CharField(max_length=128, blank=True)
+    seismic_risk_coefficient = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    infrastructure_criticality = models.PositiveSmallIntegerField(default=3, validators=[MinValueValidator(1), MaxValueValidator(5)])
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

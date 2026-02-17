@@ -13,6 +13,7 @@ from risk.models import (
     RiskAsset,
     RiskCategory,
     RiskControl,
+    RiskSource,
     ThirdPartyVendor,
     ThirdPartyRisk,
     PolicyStandard,
@@ -31,6 +32,12 @@ from risk.models import (
     RiskReview,
     RiskScoringMethod,
     RiskTreatment,
+    CriticalService,
+    Hazard,
+    HazardLink,
+    Scenario,
+    ContinuityStrategy,
+    ServiceBIAProfile,
 )
 from risk.models import RiskApproval
 
@@ -46,6 +53,17 @@ def _category_choices(category_type: str, extra_value: str | None = None) -> lis
     choices = [("", _("----"))]
     categories = RiskCategory.objects.filter(category_type=category_type).order_by("name")
     choices.extend([(item.name, item.name) for item in categories])
+    if extra_value:
+        existing = {value for value, _ in choices}
+        if extra_value not in existing:
+            choices.append((extra_value, extra_value))
+    return choices
+
+
+def _source_choices(extra_value: str | None = None) -> list[tuple[str, str]]:
+    choices = [("", _("----"))]
+    sources = RiskSource.objects.filter(is_active=True).order_by("name")
+    choices.extend([(item.name, item.name) for item in sources])
     if extra_value:
         existing = {value for value, _ in choices}
         if extra_value not in existing:
@@ -102,6 +120,7 @@ def _accessible_assets_for_user(user):
 
 class RiskCreateForm(forms.ModelForm):
     category = forms.ChoiceField(required=False)
+    source = forms.ChoiceField(required=False)
     additional_assets = forms.ModelMultipleChoiceField(
         queryset=Asset.objects.none(),
         required=False,
@@ -120,6 +139,9 @@ class RiskCreateForm(forms.ModelForm):
             "additional_assets",
             "likelihood",
             "impact",
+            "confidentiality",
+            "integrity",
+            "availability",
             "status",
             "owner",
             "due_date",
@@ -138,6 +160,9 @@ class RiskCreateForm(forms.ModelForm):
         self.fields["category"].choices = _category_choices(
             RiskCategory.TYPE_RISK,
             _bound_or_initial_value(self, "category"),
+        )
+        self.fields["source"].choices = _source_choices(
+            _bound_or_initial_value(self, "source"),
         )
 
         default_method = _resolve_default_scoring_method()
@@ -222,15 +247,26 @@ class RiskCreateForm(forms.ModelForm):
 
 class RiskUpdateForm(forms.ModelForm):
     category = forms.ChoiceField(required=False)
+    source = forms.ChoiceField(required=False)
     class Meta:
         model = Risk
-        fields = ["title", "description", "category", "source", "owner", "due_date"]
+        fields = [
+            "title",
+            "description",
+            "category",
+            "source",
+            "owner",
+            "due_date",
+        ]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["category"].choices = _category_choices(
             RiskCategory.TYPE_RISK,
             _bound_or_initial_value(self, "category"),
+        )
+        self.fields["source"].choices = _source_choices(
+            _bound_or_initial_value(self, "source"),
         )
         _apply_bootstrap(self)
 
@@ -259,7 +295,7 @@ class RiskAssetLinkForm(forms.Form):
     asset_ids = forms.ModelMultipleChoiceField(
         queryset=Asset.objects.none(),
         required=False,
-        help_text=_("Select additional assets linked to this risk."),
+        help_text=_("Select assets to add to this risk."),
     )
 
     def __init__(self, *args, **kwargs):
@@ -267,11 +303,9 @@ class RiskAssetLinkForm(forms.Form):
         self.user = kwargs.pop("user", None)
         super().__init__(*args, **kwargs)
         asset_qs = _accessible_assets_for_user(self.user).order_by("asset_code")
-        self.fields["asset_ids"].queryset = asset_qs
-        self.fields["asset_ids"].initial = self.risk.risk_assets.exclude(asset_id=self.risk.primary_asset_id).values_list(
-            "asset_id",
-            flat=True,
-        )
+        linked_ids = list(self.risk.risk_assets.values_list("asset_id", flat=True))
+        self.fields["asset_ids"].queryset = asset_qs.exclude(id__in=linked_ids)
+        self.fields["asset_ids"].widget.attrs.setdefault("size", "12")
         _apply_bootstrap(self)
 
     def clean(self):
@@ -287,18 +321,12 @@ class RiskAssetLinkForm(forms.Form):
     @transaction.atomic
     def save(self):
         selected_ids = set(self.cleaned_data.get("asset_ids", []).values_list("id", flat=True))
-        selected_ids.add(self.risk.primary_asset_id)
-
-        RiskAsset.objects.filter(risk=self.risk).exclude(asset_id__in=selected_ids).delete()
-
         for asset_id in selected_ids:
             RiskAsset.objects.update_or_create(
                 risk=self.risk,
                 asset_id=asset_id,
                 defaults={"is_primary": asset_id == self.risk.primary_asset_id},
             )
-
-        RiskAsset.objects.filter(risk=self.risk).exclude(asset_id=self.risk.primary_asset_id).update(is_primary=False)
 
 
 class RiskScoringApplyForm(forms.Form):
@@ -316,6 +344,170 @@ class RiskScoringApplyForm(forms.Form):
         risk.save(update_fields=["scoring_method", "updated_at"])
         risk.refresh_scores(actor="webui")
         return risk
+
+
+class RiskScoringInputsForm(forms.Form):
+    scoring_method = forms.ModelChoiceField(queryset=RiskScoringMethod.objects.none())
+    likelihood = forms.IntegerField(min_value=1, max_value=5)
+    impact = forms.IntegerField(min_value=1, max_value=5, required=False)
+    confidentiality = forms.IntegerField(min_value=1, max_value=5, required=False)
+    integrity = forms.IntegerField(min_value=1, max_value=5, required=False)
+    availability = forms.IntegerField(min_value=1, max_value=5, required=False)
+    dread_damage = forms.IntegerField(min_value=1, max_value=5, required=False, label=_("Damage"))
+    dread_reproducibility = forms.IntegerField(min_value=1, max_value=5, required=False, label=_("Reproducibility"))
+    dread_exploitability = forms.IntegerField(min_value=1, max_value=5, required=False, label=_("Exploitability"))
+    dread_affected_users = forms.IntegerField(min_value=1, max_value=5, required=False, label=_("Affected Users"))
+    dread_discoverability = forms.IntegerField(min_value=1, max_value=5, required=False, label=_("Discoverability"))
+    owasp_skill_level = forms.IntegerField(min_value=1, max_value=5, required=False, label=_("Skill Level"))
+    owasp_motive = forms.IntegerField(min_value=1, max_value=5, required=False, label=_("Motive"))
+    owasp_opportunity = forms.IntegerField(min_value=1, max_value=5, required=False, label=_("Opportunity"))
+    owasp_size = forms.IntegerField(min_value=1, max_value=5, required=False, label=_("Size"))
+    owasp_ease_of_discovery = forms.IntegerField(min_value=1, max_value=5, required=False, label=_("Ease of Discovery"))
+    owasp_ease_of_exploit = forms.IntegerField(min_value=1, max_value=5, required=False, label=_("Ease of Exploit"))
+    owasp_awareness = forms.IntegerField(min_value=1, max_value=5, required=False, label=_("Awareness"))
+    owasp_intrusion_detection = forms.IntegerField(min_value=1, max_value=5, required=False, label=_("Intrusion Detection"))
+    owasp_loss_confidentiality = forms.IntegerField(min_value=1, max_value=5, required=False, label=_("Loss of Confidentiality"))
+    owasp_loss_integrity = forms.IntegerField(min_value=1, max_value=5, required=False, label=_("Loss of Integrity"))
+    owasp_loss_availability = forms.IntegerField(min_value=1, max_value=5, required=False, label=_("Loss of Availability"))
+    owasp_loss_accountability = forms.IntegerField(min_value=1, max_value=5, required=False, label=_("Loss of Accountability"))
+    owasp_financial_damage = forms.IntegerField(min_value=1, max_value=5, required=False, label=_("Financial Damage"))
+    owasp_reputation_damage = forms.IntegerField(min_value=1, max_value=5, required=False, label=_("Reputation Damage"))
+    owasp_non_compliance = forms.IntegerField(min_value=1, max_value=5, required=False, label=_("Non-Compliance"))
+    owasp_privacy_violation = forms.IntegerField(min_value=1, max_value=5, required=False, label=_("Privacy Violation"))
+    cvss_attack_vector = forms.IntegerField(min_value=1, max_value=5, required=False, label=_("Attack Vector"))
+    cvss_attack_complexity = forms.IntegerField(min_value=1, max_value=5, required=False, label=_("Attack Complexity"))
+    cvss_authentication = forms.IntegerField(min_value=1, max_value=5, required=False, label=_("Authentication"))
+    cvss_confidentiality_impact = forms.IntegerField(min_value=1, max_value=5, required=False, label=_("Confidentiality Impact"))
+    cvss_integrity_impact = forms.IntegerField(min_value=1, max_value=5, required=False, label=_("Integrity Impact"))
+    cvss_availability_impact = forms.IntegerField(min_value=1, max_value=5, required=False, label=_("Availability Impact"))
+    cvss_exploitability = forms.IntegerField(min_value=1, max_value=5, required=False, label=_("Exploitability"))
+    cvss_remediation_level = forms.IntegerField(min_value=1, max_value=5, required=False, label=_("Remediation Level"))
+    cvss_report_confidence = forms.IntegerField(min_value=1, max_value=5, required=False, label=_("Report Confidence"))
+    cvss_collateral_damage_potential = forms.IntegerField(min_value=1, max_value=5, required=False, label=_("Collateral Damage Potential"))
+    cvss_target_distribution = forms.IntegerField(min_value=1, max_value=5, required=False, label=_("Target Distribution"))
+    cvss_confidentiality_requirement = forms.IntegerField(min_value=1, max_value=5, required=False, label=_("Confidentiality Requirement"))
+    cvss_integrity_requirement = forms.IntegerField(min_value=1, max_value=5, required=False, label=_("Integrity Requirement"))
+    cvss_availability_requirement = forms.IntegerField(min_value=1, max_value=5, required=False, label=_("Availability Requirement"))
+
+    def __init__(self, *args, **kwargs):
+        self.risk = kwargs.pop("risk", None)
+        super().__init__(*args, **kwargs)
+        self.fields["scoring_method"].queryset = RiskScoringMethod.objects.filter(is_active=True).order_by("name")
+        if self.risk:
+            self.fields["scoring_method"].initial = self.risk.scoring_method
+            self.fields["likelihood"].initial = self.risk.likelihood
+            self.fields["impact"].initial = self.risk.impact
+            self.fields["confidentiality"].initial = self.risk.confidentiality
+            self.fields["integrity"].initial = self.risk.integrity
+            self.fields["availability"].initial = self.risk.availability
+            if hasattr(self.risk, "dread_inputs"):
+                dread = self.risk.dread_inputs
+                self.fields["dread_damage"].initial = dread.damage
+                self.fields["dread_reproducibility"].initial = dread.reproducibility
+                self.fields["dread_exploitability"].initial = dread.exploitability
+                self.fields["dread_affected_users"].initial = dread.affected_users
+                self.fields["dread_discoverability"].initial = dread.discoverability
+            if hasattr(self.risk, "owasp_inputs"):
+                owasp = self.risk.owasp_inputs
+                self.fields["owasp_skill_level"].initial = owasp.skill_level
+                self.fields["owasp_motive"].initial = owasp.motive
+                self.fields["owasp_opportunity"].initial = owasp.opportunity
+                self.fields["owasp_size"].initial = owasp.size
+                self.fields["owasp_ease_of_discovery"].initial = owasp.ease_of_discovery
+                self.fields["owasp_ease_of_exploit"].initial = owasp.ease_of_exploit
+                self.fields["owasp_awareness"].initial = owasp.awareness
+                self.fields["owasp_intrusion_detection"].initial = owasp.intrusion_detection
+                self.fields["owasp_loss_confidentiality"].initial = owasp.loss_confidentiality
+                self.fields["owasp_loss_integrity"].initial = owasp.loss_integrity
+                self.fields["owasp_loss_availability"].initial = owasp.loss_availability
+                self.fields["owasp_loss_accountability"].initial = owasp.loss_accountability
+                self.fields["owasp_financial_damage"].initial = owasp.financial_damage
+                self.fields["owasp_reputation_damage"].initial = owasp.reputation_damage
+                self.fields["owasp_non_compliance"].initial = owasp.non_compliance
+                self.fields["owasp_privacy_violation"].initial = owasp.privacy_violation
+            if hasattr(self.risk, "cvss_inputs"):
+                cvss = self.risk.cvss_inputs
+                self.fields["cvss_attack_vector"].initial = cvss.attack_vector
+                self.fields["cvss_attack_complexity"].initial = cvss.attack_complexity
+                self.fields["cvss_authentication"].initial = cvss.authentication
+                self.fields["cvss_confidentiality_impact"].initial = cvss.confidentiality_impact
+                self.fields["cvss_integrity_impact"].initial = cvss.integrity_impact
+                self.fields["cvss_availability_impact"].initial = cvss.availability_impact
+                self.fields["cvss_exploitability"].initial = cvss.exploitability
+                self.fields["cvss_remediation_level"].initial = cvss.remediation_level
+                self.fields["cvss_report_confidence"].initial = cvss.report_confidence
+                self.fields["cvss_collateral_damage_potential"].initial = cvss.collateral_damage_potential
+                self.fields["cvss_target_distribution"].initial = cvss.target_distribution
+                self.fields["cvss_confidentiality_requirement"].initial = cvss.confidentiality_requirement
+                self.fields["cvss_integrity_requirement"].initial = cvss.integrity_requirement
+                self.fields["cvss_availability_requirement"].initial = cvss.availability_requirement
+        _apply_bootstrap(self)
+
+    def clean(self):
+        cleaned = super().clean()
+        method = cleaned.get("scoring_method")
+        if not method:
+            return cleaned
+        if method.method_type == RiskScoringMethod.METHOD_CIA:
+            missing = [name for name in ("confidentiality", "integrity", "availability") if not cleaned.get(name)]
+            if missing:
+                raise forms.ValidationError(
+                    _("CIA scoring requires confidentiality, integrity, and availability scores.")
+                )
+        elif method.method_type == RiskScoringMethod.METHOD_DREAD:
+            required = [
+                "dread_damage",
+                "dread_reproducibility",
+                "dread_exploitability",
+                "dread_affected_users",
+                "dread_discoverability",
+            ]
+            if any(not cleaned.get(name) for name in required):
+                raise forms.ValidationError(_("DREAD scoring requires all DREAD factors."))
+        elif method.method_type == RiskScoringMethod.METHOD_OWASP:
+            required = [
+                "owasp_skill_level",
+                "owasp_motive",
+                "owasp_opportunity",
+                "owasp_size",
+                "owasp_ease_of_discovery",
+                "owasp_ease_of_exploit",
+                "owasp_awareness",
+                "owasp_intrusion_detection",
+                "owasp_loss_confidentiality",
+                "owasp_loss_integrity",
+                "owasp_loss_availability",
+                "owasp_loss_accountability",
+                "owasp_financial_damage",
+                "owasp_reputation_damage",
+                "owasp_non_compliance",
+                "owasp_privacy_violation",
+            ]
+            if any(not cleaned.get(name) for name in required):
+                raise forms.ValidationError(_("OWASP scoring requires all OWASP factors."))
+        elif method.method_type == RiskScoringMethod.METHOD_CVSS:
+            required = [
+                "cvss_attack_vector",
+                "cvss_attack_complexity",
+                "cvss_authentication",
+                "cvss_confidentiality_impact",
+                "cvss_integrity_impact",
+                "cvss_availability_impact",
+                "cvss_exploitability",
+                "cvss_remediation_level",
+                "cvss_report_confidence",
+                "cvss_collateral_damage_potential",
+                "cvss_target_distribution",
+                "cvss_confidentiality_requirement",
+                "cvss_integrity_requirement",
+                "cvss_availability_requirement",
+            ]
+            if any(not cleaned.get(name) for name in required):
+                raise forms.ValidationError(_("CVSS scoring requires all CVSS factors."))
+        else:
+            if not cleaned.get("impact"):
+                raise forms.ValidationError(_("Impact is required for the selected scoring method."))
+        return cleaned
 
 
 class RiskBulkUpdateForm(forms.Form):
@@ -478,6 +670,124 @@ class RiskScoringMethodCreateForm(forms.ModelForm):
             RiskScoringMethod.objects.exclude(id=method.id).update(is_default=False)
         return method
 
+
+class CriticalServiceForm(forms.ModelForm):
+    class Meta:
+        model = CriticalService
+        fields = ["code", "name", "description", "owner", "status"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        _apply_bootstrap(self)
+
+
+class ServiceBIAProfileForm(forms.ModelForm):
+    impact_escalation_curve = forms.JSONField(
+        required=False,
+        widget=forms.Textarea(attrs={"rows": 6}),
+        help_text=_("JSON array of steps with time_minutes and level."),
+    )
+    crisis_trigger_rules = forms.JSONField(
+        required=False,
+        widget=forms.Textarea(attrs={"rows": 4}),
+        help_text=_("JSON object with crisis trigger thresholds."),
+    )
+
+    class Meta:
+        model = ServiceBIAProfile
+        fields = [
+            "service",
+            "mao_hours",
+            "rto_hours",
+            "rpo_hours",
+            "service_criticality",
+            "impact_operational",
+            "impact_financial",
+            "impact_environmental",
+            "impact_safety",
+            "impact_legal",
+            "impact_reputation",
+            "impact_escalation_curve",
+            "crisis_trigger_rules",
+            "notes",
+        ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["service"].queryset = CriticalService.objects.order_by("name")
+        _apply_bootstrap(self)
+
+
+class HazardForm(forms.ModelForm):
+    class Meta:
+        model = Hazard
+        fields = ["code", "name", "hazard_type", "description", "default_likelihood"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        _apply_bootstrap(self)
+
+
+class HazardLinkForm(forms.ModelForm):
+    class Meta:
+        model = HazardLink
+        fields = ["hazard", "asset", "service", "impact_multiplier"]
+
+    def __init__(self, *args, **kwargs):
+        hazard = kwargs.pop("hazard", None)
+        super().__init__(*args, **kwargs)
+        self.fields["hazard"].queryset = Hazard.objects.order_by("name")
+        self.fields["asset"].queryset = Asset.objects.order_by("asset_code")
+        self.fields["service"].queryset = CriticalService.objects.order_by("name")
+        if hazard:
+            self.fields["hazard"].initial = hazard
+            self.fields["hazard"].widget = forms.HiddenInput()
+        _apply_bootstrap(self)
+
+    def clean(self):
+        cleaned = super().clean()
+        asset = cleaned.get("asset")
+        service = cleaned.get("service")
+        if not asset and not service:
+            raise forms.ValidationError(_("Select an asset or service to link."))
+        return cleaned
+
+
+class ScenarioForm(forms.ModelForm):
+    class Meta:
+        model = Scenario
+        fields = ["name", "hazard", "duration_hours", "notes"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["hazard"].queryset = Hazard.objects.order_by("name")
+        _apply_bootstrap(self)
+
+
+class ContinuityStrategyForm(forms.ModelForm):
+    class Meta:
+        model = ContinuityStrategy
+        fields = [
+            "code",
+            "name",
+            "strategy_type",
+            "status",
+            "readiness_level",
+            "service",
+            "bia_profile",
+            "scenario",
+            "rto_target_hours",
+            "rpo_target_hours",
+            "owner",
+            "notes",
+        ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["service"].queryset = CriticalService.objects.order_by("name")
+        self.fields["bia_profile"].queryset = ServiceBIAProfile.objects.select_related("service").order_by("service__name")
+        self.fields["scenario"].queryset = Scenario.objects.order_by("-created_at")
+        _apply_bootstrap(self)
 
 class EamSyncForm(forms.Form):
     direction = forms.ChoiceField(choices=IntegrationSyncRun.DIRECTION_CHOICES, initial=IntegrationSyncRun.DIRECTION_INBOUND)

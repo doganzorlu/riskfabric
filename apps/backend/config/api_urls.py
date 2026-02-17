@@ -10,6 +10,7 @@ from risk.views import (
     ControlTestPlanViewSet,
     ControlTestRunViewSet,
     GovernanceProgramViewSet,
+    evaluate_incident,
     RiskApprovalViewSet,
     RiskControlViewSet,
     RiskNotificationViewSet,
@@ -51,4 +52,5 @@ urlpatterns = [
     path("", include(router.urls)),
     path("integration/eam/plugins", IntegrationPluginCatalogView.as_view(), name="integration-eam-plugins"),
     path("integration/eam/sync", EamSyncView.as_view(), name="integration-eam-sync"),
+    path("resilience/evaluate-incident/", evaluate_incident, name="resilience-evaluate-incident"),
 ]

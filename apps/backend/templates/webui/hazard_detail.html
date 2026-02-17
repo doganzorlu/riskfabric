@@ -1,0 +1,79 @@
+{% extends "webui/base.html" %}
+{% load i18n %}
+{% block content %}
+<div class="card">
+  <h1>{% if edit_instance %}{% trans "Edit Hazard" %}{% else %}{% trans "New Hazard" %}{% endif %}</h1>
+  <p class="muted">{% trans "Update hazard details and manage linked assets and services." %}</p>
+  {% if can_manage_risks %}
+  <form method="post">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="save" />
+    {% if edit_instance %}
+      <input type="hidden" name="hazard_id" value="{{ edit_instance.id }}" />
+    {% endif %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-primary">{% trans "Save Hazard" %}</button>
+    <a href="{% url 'webui:hazards' %}" class="btn btn-outline-secondary">{% trans "Back to Hazards" %}</a>
+  </form>
+  {% else %}
+  <p class="muted">{% trans "You do not have permission to manage risks." %}</p>
+  {% endif %}
+</div>
+
+<div class="card">
+  <h2>{% trans "Hazard Links" %}</h2>
+  {% if edit_instance %}
+    {% if can_manage_risks %}
+    <form method="post" style="margin-bottom: 12px;">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="link_hazard" />
+      {% if link_form.instance and link_form.instance.id %}
+        <input type="hidden" name="link_id" value="{{ link_form.instance.id }}" />
+      {% endif %}
+      {{ link_form.as_p }}
+      <button type="submit" class="btn btn-primary">{% trans "Save Hazard Link" %}</button>
+      <a href="{% url 'webui:hazard-detail' edit_instance.id %}" class="btn btn-outline-secondary">{% trans "Cancel" %}</a>
+    </form>
+    {% else %}
+    <p class="muted">{% trans "You do not have permission to manage risks." %}</p>
+    {% endif %}
+  {% else %}
+    <p class="muted">{% trans "Save the hazard before linking assets or services." %}</p>
+  {% endif %}
+
+  <table class="table table-striped table-hover">
+    <thead>
+      <tr>
+        <th>{% trans "Hazard" %}</th>
+        <th>{% trans "Asset" %}</th>
+        <th>{% trans "Service" %}</th>
+        <th>{% trans "Impact Multiplier" %}</th>
+        <th>{% trans "Actions" %}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for link in hazard_links %}
+      <tr>
+        <td>{{ link.hazard.name }}</td>
+        <td>{% if link.asset %}{{ link.asset.asset_code }}{% endif %}</td>
+        <td>{% if link.service %}{{ link.service.name }}{% endif %}</td>
+        <td>{{ link.impact_multiplier }}</td>
+        <td class="actions">
+          <a href="{% url 'webui:hazard-detail' edit_instance.id %}?edit_link={{ link.id }}" class="btn btn-outline-secondary btn-sm">{% trans "Edit" %}</a>
+          {% if can_manage_risks %}
+          <form method="post" style="display:inline;" onsubmit="return confirm('{% trans "Delete this hazard link?" %}');">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="delete_link" />
+            <input type="hidden" name="link_id" value="{{ link.id }}" />
+            <button type="submit" class="btn btn-danger btn-sm">{% trans "Delete" %}</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5">{% trans "No hazard links found." %}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

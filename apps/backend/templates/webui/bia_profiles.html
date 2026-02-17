@@ -1,0 +1,238 @@
+{% extends "webui/base.html" %}
+{% load i18n %}
+{% block content %}
+<div class="card">
+  <h1>{% trans "Business Impact Analysis (BIA)" %}</h1>
+  <p class="muted">{% trans "Define escalation curves, MAO/MTPD, RTO, and RPO per critical service." %}</p>
+  <form method="get" class="filter-grid" style="margin-top: 12px;">
+    <div>
+      <input id="bia-filter" type="text" name="q" value="{{ query }}" placeholder="{% trans 'Service name or code' %}" aria-label="{% trans 'Search BIA Profiles' %}" />
+    </div>
+    <div class="actions">
+      <button type="submit" class="btn btn-primary">{% trans "Filter" %}</button>
+      {% if can_manage_risks %}
+        <a href="?q={{ query }}&new=1" class="btn btn-success">{% trans "New BIA Profile" %}</a>
+      {% endif %}
+    </div>
+  </form>
+</div>
+
+{% if show_form %}
+<div class="card">
+  <h2>{% if edit_instance %}{% trans "Edit BIA Profile" %}{% else %}{% trans "New BIA Profile" %}{% endif %}</h2>
+  {% if can_manage_risks %}
+  <form method="post">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="save" />
+    <input type="hidden" name="return_q" value="{{ query }}" />
+    {% if edit_instance %}
+      <input type="hidden" name="profile_id" value="{{ edit_instance.id }}" />
+    {% endif %}
+    {{ form.non_field_errors }}
+    <h3>{% trans "Service Criticality" %}</h3>
+    <div style="display:grid; gap:12px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
+      <div>{{ form.service.label_tag }} {{ form.service }}</div>
+      <div>{{ form.service_criticality.label_tag }} {{ form.service_criticality }}</div>
+      <div>{{ form.mao_hours.label_tag }} {{ form.mao_hours }}</div>
+      <div>{{ form.rto_hours.label_tag }} {{ form.rto_hours }}</div>
+      <div>{{ form.rpo_hours.label_tag }} {{ form.rpo_hours }}</div>
+    </div>
+
+    <h3 style="margin-top: 16px;">{% trans "Impact Dimensions (0-5)" %}</h3>
+    <div style="display:grid; gap:12px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
+      <div>{{ form.impact_operational.label_tag }} {{ form.impact_operational }}</div>
+      <div>{{ form.impact_financial.label_tag }} {{ form.impact_financial }}</div>
+      <div>{{ form.impact_environmental.label_tag }} {{ form.impact_environmental }}</div>
+      <div>{{ form.impact_safety.label_tag }} {{ form.impact_safety }}</div>
+      <div>{{ form.impact_legal.label_tag }} {{ form.impact_legal }}</div>
+      <div>{{ form.impact_reputation.label_tag }} {{ form.impact_reputation }}</div>
+    </div>
+
+    <h3 style="margin-top: 16px;">{% trans "Escalation Timeline Editor" %}</h3>
+    <p class="muted">{% trans "Define time thresholds in minutes with ordered impact levels." %}</p>
+    <table class="table table-striped" id="escalation-table">
+      <thead>
+        <tr>
+          <th>{% trans "Time (minutes)" %}</th>
+          <th>{% trans "Impact Level" %}</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <button type="button" class="btn btn-outline-secondary btn-sm" id="add-escalation-row">{% trans "Add step" %}</button>
+    <div style="margin-top: 8px;">
+      {{ form.impact_escalation_curve.label_tag }} {{ form.impact_escalation_curve }}
+      {% if form.impact_escalation_curve.help_text %}
+        <small class="muted">{{ form.impact_escalation_curve.help_text }}</small>
+      {% endif %}
+    </div>
+
+    <h3 style="margin-top: 16px;">{% trans "Crisis Trigger Configuration" %}</h3>
+    <p class="muted">{% trans "Use JSON rules to define crisis recommendation conditions." %}</p>
+    <div>
+      {{ form.crisis_trigger_rules.label_tag }} {{ form.crisis_trigger_rules }}
+      {% if form.crisis_trigger_rules.help_text %}
+        <small class="muted">{{ form.crisis_trigger_rules.help_text }}</small>
+      {% endif %}
+    </div>
+
+    <div style="margin-top: 16px;">
+      {{ form.notes.label_tag }} {{ form.notes }}
+    </div>
+    <button type="submit" class="btn btn-primary">{% trans "Save BIA Profile" %}</button>
+    <a href="?q={{ query }}" class="btn btn-outline-secondary">{% trans "Cancel" %}</a>
+  </form>
+  {% else %}
+  <p class="muted">{% trans "You do not have permission to manage risks." %}</p>
+  {% endif %}
+</div>
+{% endif %}
+
+<div class="card">
+  <h2>{% trans "BIA Profiles" %}</h2>
+  <table class="table table-striped table-hover">
+    <thead>
+      <tr>
+        <th>{% trans "Service" %}</th>
+        <th>{% trans "MAO/MTPD (h)" %}</th>
+        <th>{% trans "RTO (h)" %}</th>
+        <th>{% trans "RPO (h)" %}</th>
+        <th>{% trans "Actions" %}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in profiles %}
+      <tr>
+        <td>{{ item.service.name }}</td>
+        <td>{{ item.mao_hours }}</td>
+        <td>{{ item.rto_hours }}</td>
+        <td>{{ item.rpo_hours }}</td>
+        <td class="actions">
+          <a href="?q={{ query }}&edit={{ item.id }}" class="btn btn-outline-secondary btn-sm">{% trans "Edit" %}</a>
+          {% if can_manage_risks %}
+          <form method="post" style="display:inline;" onsubmit="return confirm('{% trans "Delete this BIA profile?" %}');">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="delete" />
+            <input type="hidden" name="profile_id" value="{{ item.id }}" />
+            <input type="hidden" name="return_q" value="{{ query }}" />
+            <button type="submit" class="btn btn-danger btn-sm">{% trans "Delete" %}</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5">{% trans "No BIA profiles found." %}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% if page_obj %}
+  <div class="actions" style="margin-top: 12px; justify-content: flex-end;">
+    {% if page_obj.has_previous %}
+      <a class="btn btn-outline-secondary btn-sm" href="?q={{ query }}&page={{ page_obj.previous_page_number }}">{% trans "Previous" %}</a>
+    {% endif %}
+    <span class="muted">{% trans "Page" %} {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+      <a class="btn btn-outline-secondary btn-sm" href="?q={{ query }}&page={{ page_obj.next_page_number }}">{% trans "Next" %}</a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+
+<script>
+  (function () {
+    const textarea = document.getElementById("id_impact_escalation_curve");
+    const tableBody = document.querySelector("#escalation-table tbody");
+    const addButton = document.getElementById("add-escalation-row");
+    if (!textarea || !tableBody || !addButton) return;
+
+    const levels = ["MINOR", "DEGRADED", "SEVERE", "CRITICAL", "CATASTROPHIC"];
+
+    function parseCurve() {
+      try {
+        const raw = textarea.value.trim();
+        if (!raw) return [];
+        return JSON.parse(raw);
+      } catch (err) {
+        return [];
+      }
+    }
+
+    function renderRow(step = {}) {
+      const row = document.createElement("tr");
+      const timeCell = document.createElement("td");
+      const levelCell = document.createElement("td");
+      const actionCell = document.createElement("td");
+
+      const timeInput = document.createElement("input");
+      timeInput.type = "number";
+      timeInput.min = "1";
+      timeInput.value = step.time_minutes || "";
+      timeInput.className = "form-control";
+      timeCell.appendChild(timeInput);
+
+      const levelSelect = document.createElement("select");
+      levelSelect.className = "form-select";
+      levels.forEach((level) => {
+        const option = document.createElement("option");
+        option.value = level;
+        option.textContent = level;
+        if (step.level === level) option.selected = true;
+        levelSelect.appendChild(option);
+      });
+      levelCell.appendChild(levelSelect);
+
+      const removeButton = document.createElement("button");
+      removeButton.type = "button";
+      removeButton.className = "btn btn-outline-danger btn-sm";
+      removeButton.textContent = "×";
+      removeButton.addEventListener("click", () => {
+        row.remove();
+        syncTextarea();
+      });
+      actionCell.appendChild(removeButton);
+
+      [timeInput, levelSelect].forEach((el) => {
+        el.addEventListener("change", syncTextarea);
+        el.addEventListener("input", syncTextarea);
+      });
+
+      row.appendChild(timeCell);
+      row.appendChild(levelCell);
+      row.appendChild(actionCell);
+      tableBody.appendChild(row);
+    }
+
+    function syncTextarea() {
+      const rows = Array.from(tableBody.querySelectorAll("tr"));
+      const data = rows
+        .map((row) => {
+          const timeValue = row.querySelector("input").value;
+          const levelValue = row.querySelector("select").value;
+          if (!timeValue) return null;
+          return { time_minutes: parseInt(timeValue, 10), level: levelValue };
+        })
+        .filter(Boolean);
+      textarea.value = data.length ? JSON.stringify(data, null, 2) : "";
+    }
+
+    function renderFromTextarea() {
+      const curve = parseCurve();
+      tableBody.innerHTML = "";
+      if (Array.isArray(curve)) {
+        curve.forEach(renderRow);
+      }
+      if (!curve || !curve.length) {
+        renderRow();
+      }
+    }
+
+    addButton.addEventListener("click", () => {
+      renderRow();
+    });
+
+    textarea.addEventListener("input", renderFromTextarea);
+    renderFromTextarea();
+  })();
+</script>
+{% endblock %}

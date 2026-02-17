@@ -6,6 +6,24 @@
 </div>
 
 <div class="card">
+  <div class="row" style="align-items:center; justify-content: space-between;">
+    <h2 style="margin: 0;">{% trans "Risk Actions" %}</h2>
+  </div>
+  <div style="display:flex; gap: 8px; flex-wrap: wrap; margin-top: 12px;">
+    <button type="button" class="btn btn-outline-secondary" data-dialog-open="dialog-approval">{% trans "Approval Workflow" %}</button>
+    <button type="button" class="btn btn-outline-secondary" data-dialog-open="dialog-treatment">{% trans "Add Treatment" %}</button>
+    <button type="button" class="btn btn-outline-secondary" data-dialog-open="dialog-review">{% trans "Add Review" %}</button>
+    <button type="button"
+            class="btn btn-outline-secondary"
+            data-dialog-open="dialog-scoring-inputs"
+            onclick="(function(){var d=document.getElementById('dialog-scoring-inputs');if(d){if(d.showModal){d.showModal();}else{d.setAttribute('open','');d.style.display='block';}}})();">
+      {% trans "Update Scoring Inputs" %}
+    </button>
+    <button type="button" class="btn btn-outline-secondary" data-dialog-open="dialog-scoring-history">{% trans "Scoring History" %}</button>
+  </div>
+</div>
+
+<div class="card">
   <h2>{% trans "Edit Risk" %}</h2>
   {% if can_manage_risks %}
   <form method="post"
@@ -14,7 +32,28 @@
         hx-swap="outerHTML">
     {% csrf_token %}
     <input type="hidden" name="action" value="update_risk" />
-    {{ update_form.as_p }}
+    {{ update_form.non_field_errors }}
+    <p>{{ update_form.title.label_tag }} {{ update_form.title }} {{ update_form.title.errors }}</p>
+    <p>{{ update_form.description.label_tag }} {{ update_form.description }} {{ update_form.description.errors }}</p>
+    <p>{{ update_form.category.label_tag }} {{ update_form.category }} {{ update_form.category.errors }}</p>
+    <p>{{ update_form.source.label_tag }} {{ update_form.source }} {{ update_form.source.errors }}</p>
+    <p>{{ update_form.owner.label_tag }} {{ update_form.owner }} {{ update_form.owner.errors }}</p>
+    <p>{{ update_form.due_date.label_tag }} {{ update_form.due_date }} {{ update_form.due_date.errors }}</p>
+    <div class="card" style="margin-top: 12px;">
+      <h3>{% trans "Scoring Details" %}</h3>
+      <p class="muted">{% trans "Selected scoring method and weights used in calculation." %}</p>
+      {% if risk.scoring_method %}
+        <div class="muted">
+          <div><strong>{% trans "Method" %}:</strong> {{ risk.scoring_method.name }}</div>
+          <div><strong>{% trans "Type" %}:</strong> {{ risk.scoring_method.method_type }}</div>
+          <div><strong>{% trans "Likelihood Weight" %}:</strong> {{ risk.scoring_method.likelihood_weight }}</div>
+          <div><strong>{% trans "Impact Weight" %}:</strong> {{ risk.scoring_method.impact_weight }}</div>
+          <div><strong>{% trans "Treatment Effectiveness Weight" %}:</strong> {{ risk.scoring_method.treatment_effectiveness_weight }}</div>
+        </div>
+      {% else %}
+        <div class="muted">-</div>
+      {% endif %}
+    </div>
     <button type="submit" class="btn btn-primary">{% trans "Save Changes" %}</button>
     <a href="{% url 'webui:risk-detail' risk.id %}" class="btn btn-outline-secondary">{% trans "Cancel" %}</a>
   </form>
@@ -31,98 +70,88 @@
   {% include "webui/partials/risk_dependency_graph.html" %}
 </div>
 
-<div class="card">
-  <h2>{% trans "Approval Workflow" %}</h2>
-  <div class="row">
-    <div class="card">
-      <h3>{% trans "Request Approval" %}</h3>
-      {% if can_manage_risks %}
-      <form method="post">
-        {% csrf_token %}
-        <input type="hidden" name="action" value="request_approval" />
-        {{ approval_request_form.as_p }}
-        <button type="submit" class="btn btn-primary">{% trans "Request Approval" %}</button>
-        <a href="{% url 'webui:risk-detail' risk.id %}" class="btn btn-outline-secondary">{% trans "Cancel" %}</a>
-      </form>
-      {% else %}
-      <p class="muted">{% trans "You do not have permission to request approval." %}</p>
-      {% endif %}
+<dialog id="dialog-approval" class="modal">
+  <div class="card">
+    <div class="row" style="align-items:center; justify-content: space-between;">
+      <h2>{% trans "Approval Workflow" %}</h2>
+      <button type="button" class="btn btn-outline-secondary" data-dialog-close>{% trans "Close" %}</button>
     </div>
-    <div class="card">
-      <h3>{% trans "Decide Approval" %}</h3>
-      {% if can_review_risks %}
-      <form method="post">
-        {% csrf_token %}
-        <input type="hidden" name="action" value="decide_approval" />
-        <label>{% trans "Approval Request" %}</label>
-        <select name="approval_id">
+    <div class="row">
+      <div class="card">
+        <h3>{% trans "Request Approval" %}</h3>
+        {% if can_manage_risks %}
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="request_approval" />
+          {{ approval_request_form.as_p }}
+          <button type="submit" class="btn btn-primary">{% trans "Request Approval" %}</button>
+          <button type="button" class="btn btn-outline-secondary" data-dialog-close>{% trans "Cancel" %}</button>
+        </form>
+        {% else %}
+        <p class="muted">{% trans "You do not have permission to request approval." %}</p>
+        {% endif %}
+      </div>
+      <div class="card">
+        <h3>{% trans "Decide Approval" %}</h3>
+        {% if can_review_risks %}
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="decide_approval" />
+          <label>{% trans "Approval Request" %}</label>
+          <select name="approval_id">
+            {% for item in approvals %}
+              {% if item.status == "pending" %}
+                <option value="{{ item.id }}">#{{ item.id }} - {{ item.requested_by.username }} ({{ item.created_at }})</option>
+              {% endif %}
+            {% endfor %}
+          </select>
+          {{ approval_decision_form.as_p }}
+          <button type="submit" class="btn btn-primary">{% trans "Save Decision" %}</button>
+          <button type="button" class="btn btn-outline-secondary" data-dialog-close>{% trans "Cancel" %}</button>
+        </form>
+        {% else %}
+        <p class="muted">{% trans "You do not have permission to decide approvals." %}</p>
+        {% endif %}
+      </div>
+    </div>
+    <div class="card" style="margin-top: 12px;">
+      <h3>{% trans "Approval History" %}</h3>
+      <table class="table table-striped table-hover">
+        <thead>
+          <tr>
+            <th>{% trans "Status" %}</th>
+            <th>{% trans "Requested By" %}</th>
+            <th>{% trans "Requested At" %}</th>
+            <th>{% trans "Decided By" %}</th>
+            <th>{% trans "Decided At" %}</th>
+            <th>{% trans "Comments" %}</th>
+          </tr>
+        </thead>
+        <tbody>
           {% for item in approvals %}
-            {% if item.status == "pending" %}
-              <option value="{{ item.id }}">#{{ item.id }} - {{ item.requested_by.username }} ({{ item.created_at }})</option>
-            {% endif %}
+          <tr>
+            <td>{{ item.get_status_display }}</td>
+            <td>{{ item.requested_by.username }}</td>
+            <td>{{ item.created_at }}</td>
+            <td>{% if item.decided_by %}{{ item.decided_by.username }}{% endif %}</td>
+            <td>{{ item.decided_at }}</td>
+            <td>{{ item.comments }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="6">{% trans "No approvals yet." %}</td></tr>
           {% endfor %}
-        </select>
-        {{ approval_decision_form.as_p }}
-        <button type="submit" class="btn btn-primary">{% trans "Save Decision" %}</button>
-        <a href="{% url 'webui:risk-detail' risk.id %}" class="btn btn-outline-secondary">{% trans "Cancel" %}</a>
-      </form>
-      {% else %}
-      <p class="muted">{% trans "You do not have permission to decide approvals." %}</p>
-      {% endif %}
+        </tbody>
+      </table>
     </div>
   </div>
-  <div class="card" style="margin-top: 12px;">
-    <h3>{% trans "Approval History" %}</h3>
-    <table class="table table-striped table-hover">
-      <thead>
-        <tr>
-          <th>{% trans "Status" %}</th>
-          <th>{% trans "Requested By" %}</th>
-          <th>{% trans "Requested At" %}</th>
-          <th>{% trans "Decided By" %}</th>
-          <th>{% trans "Decided At" %}</th>
-          <th>{% trans "Comments" %}</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for item in approvals %}
-        <tr>
-          <td>{{ item.get_status_display }}</td>
-          <td>{{ item.requested_by.username }}</td>
-          <td>{{ item.created_at }}</td>
-          <td>{% if item.decided_by %}{{ item.decided_by.username }}{% endif %}</td>
-          <td>{{ item.decided_at }}</td>
-          <td>{{ item.comments }}</td>
-        </tr>
-        {% empty %}
-        <tr><td colspan="6">{% trans "No approvals yet." %}</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-</div>
+</dialog>
 
-<div class="row">
+<dialog id="dialog-treatment" class="modal">
   <div class="card">
-    <h2>{% trans "Apply Scoring Method" %}</h2>
-    {% if can_manage_risks %}
-    <form method="post"
-          hx-post="{% url 'webui:risk-detail' risk.id %}"
-          hx-target="#risk-summary"
-          hx-swap="outerHTML">
-      {% csrf_token %}
-      <input type="hidden" name="action" value="apply_scoring" />
-      {{ scoring_form.as_p }}
-      <button type="submit" class="btn btn-primary">{% trans "Apply Scoring" %}</button>
-      <a href="{% url 'webui:risk-detail' risk.id %}" class="btn btn-outline-secondary">{% trans "Cancel" %}</a>
-    </form>
-    {% else %}
-    <p class="muted">{% trans "You do not have permission to apply scoring." %}</p>
-    {% endif %}
-  </div>
-
-  <div class="card">
-    <h2>{% trans "Add Treatment" %}</h2>
+    <div class="row" style="align-items:center; justify-content: space-between;">
+      <h2>{% trans "Add Treatment" %}</h2>
+      <button type="button" class="btn btn-outline-secondary" data-dialog-close>{% trans "Close" %}</button>
+    </div>
     {% if can_manage_risks %}
     <form method="post"
           hx-post="{% url 'webui:risk-detail' risk.id %}"
@@ -133,15 +162,20 @@
       <input id="control-filter" type="text" placeholder="{% trans 'Type to filter controls' %}" aria-label="{% trans 'Filter Controls' %}" />
       {{ treatment_form.as_p }}
       <button type="submit" class="btn btn-primary">{% trans "Add Treatment" %}</button>
-      <a href="{% url 'webui:risk-detail' risk.id %}" class="btn btn-outline-secondary">{% trans "Cancel" %}</a>
+      <button type="button" class="btn btn-outline-secondary" data-dialog-close>{% trans "Cancel" %}</button>
     </form>
     {% else %}
     <p class="muted">{% trans "You do not have permission to manage treatments." %}</p>
     {% endif %}
   </div>
+</dialog>
 
+<dialog id="dialog-review" class="modal">
   <div class="card">
-    <h2>{% trans "Add Review" %}</h2>
+    <div class="row" style="align-items:center; justify-content: space-between;">
+      <h2>{% trans "Add Review" %}</h2>
+      <button type="button" class="btn btn-outline-secondary" data-dialog-close>{% trans "Close" %}</button>
+    </div>
     {% if can_review_risks %}
     <form method="post"
           hx-post="{% url 'webui:risk-detail' risk.id %}"
@@ -151,25 +185,318 @@
       <input type="hidden" name="action" value="add_review" />
       {{ review_form.as_p }}
       <button type="submit" class="btn btn-primary">{% trans "Add Review" %}</button>
-      <a href="{% url 'webui:risk-detail' risk.id %}" class="btn btn-outline-secondary">{% trans "Cancel" %}</a>
+      <button type="button" class="btn btn-outline-secondary" data-dialog-close>{% trans "Cancel" %}</button>
     </form>
     {% else %}
     <p class="muted">{% trans "You do not have permission to add reviews." %}</p>
     {% endif %}
   </div>
-</div>
+</dialog>
 
-<div id="risk-treatments">
-  {% include "webui/partials/risk_treatments.html" %}
-</div>
+<dialog id="dialog-scoring-inputs" class="modal">
+  <div class="card">
+    <div class="row" style="align-items:center; justify-content: space-between;">
+      <h2>{% trans "Update Scoring Inputs" %}</h2>
+      <button type="button" class="btn btn-outline-secondary" data-dialog-close>{% trans "Close" %}</button>
+    </div>
+    {% if can_manage_risks %}
+    <form method="post"
+          hx-post="{% url 'webui:risk-detail' risk.id %}"
+          hx-target="#risk-summary"
+          hx-swap="outerHTML">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="update_scoring_inputs" />
+      {{ scoring_inputs_form.as_p }}
+      <p id="scoring-inputs-hint" class="muted"></p>
+      <button type="submit" class="btn btn-primary" id="scoring-inputs-submit">
+        {% trans "Save Scoring Inputs" %}
+      </button>
+      <button type="button" class="btn btn-outline-secondary" data-dialog-close>{% trans "Cancel" %}</button>
+    </form>
+    {% else %}
+    <p class="muted">{% trans "You do not have permission to update scoring inputs." %}</p>
+    {% endif %}
+  </div>
+</dialog>
 
-<div id="risk-reviews">
-  {% include "webui/partials/risk_reviews.html" %}
-</div>
+<dialog id="dialog-scoring-history" class="modal">
+  <div class="card">
+    <div class="row" style="align-items:center; justify-content: space-between;">
+      <h2>{% trans "Scoring History" %}</h2>
+      <button type="button" class="btn btn-outline-secondary" data-dialog-close>{% trans "Close" %}</button>
+    </div>
+    <div id="risk-scoring-history">
+      {% include "webui/partials/risk_scoring_history.html" %}
+    </div>
+  </div>
+</dialog>
 
-<div id="risk-scoring-history">
-  {% include "webui/partials/risk_scoring_history.html" %}
-</div>
+{{ scoring_methods|json_script:"scoring-methods-data" }}
+<script>
+  (function () {
+    let backdrop = null;
+    let lastActiveElement = null;
+    const ensureBackdrop = () => {
+      if (!backdrop) {
+        backdrop = document.createElement("div");
+        backdrop.className = "modal-backdrop";
+        backdrop.addEventListener("click", () => {
+          const openDialog = document.querySelector("dialog.modal.is-open");
+          if (openDialog) {
+            closeDialog(openDialog);
+          }
+        });
+      }
+      if (!backdrop.isConnected) {
+        document.body.appendChild(backdrop);
+      }
+    };
+    const removeBackdrop = () => {
+      if (backdrop && backdrop.isConnected) {
+        backdrop.remove();
+      }
+    };
+
+    const openDialog = (dialog) => {
+      if (!dialog) return;
+      lastActiveElement = document.activeElement;
+      dialog.setAttribute("open", "");
+      dialog.style.display = "block";
+      dialog.classList.add("is-open");
+      ensureBackdrop();
+      const focusable = dialog.querySelector("input, select, textarea, button");
+      if (focusable) {
+        focusable.focus();
+      }
+    };
+    const closeDialog = (dialog) => {
+      if (!dialog) return;
+      dialog.removeAttribute("open");
+      dialog.style.display = "none";
+      dialog.classList.remove("is-open");
+      removeBackdrop();
+      if (lastActiveElement && typeof lastActiveElement.focus === "function") {
+        lastActiveElement.focus();
+      }
+    };
+
+    const openers = document.querySelectorAll("[data-dialog-open]");
+    openers.forEach((button) => {
+      button.addEventListener("click", () => {
+        const target = document.getElementById(button.dataset.dialogOpen);
+        if (target) {
+          openDialog(target);
+        }
+      });
+    });
+
+    document.querySelectorAll("dialog[data-dialog]").forEach(() => {});
+    document.querySelectorAll("dialog").forEach((dialog) => {
+      dialog.addEventListener("click", (event) => {
+        if (event.target === dialog) {
+          closeDialog(dialog);
+        }
+      });
+    });
+
+    document.querySelectorAll("[data-dialog-close]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const dialog = button.closest("dialog");
+        if (dialog) {
+          closeDialog(dialog);
+        }
+      });
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape") return;
+      const openDialogEl = document.querySelector("dialog.modal.is-open");
+      if (openDialogEl) {
+        event.preventDefault();
+        closeDialog(openDialogEl);
+      }
+    });
+
+    document.addEventListener("htmx:beforeRequest", (event) => {
+      if (!event.detail || !event.detail.elt) return;
+      const form = event.detail.elt.closest ? event.detail.elt.closest("form") : null;
+      if (!form) return;
+      if (form.querySelector("input[name='action'][value='update_scoring_inputs']")) {
+        const dialog = document.getElementById("dialog-scoring-inputs");
+        closeDialog(dialog);
+      }
+    });
+
+    document.addEventListener("htmx:afterSwap", () => {
+      const openDialogEl = document.querySelector("dialog.modal.is-open");
+      if (openDialogEl) {
+        closeDialog(openDialogEl);
+      } else {
+        removeBackdrop();
+      }
+      const focusTarget =
+        document.getElementById("id_edit-title") ||
+        document.querySelector("form[action][method='post'] input, form[action][method='post'] select, form[action][method='post'] textarea");
+      if (focusTarget && typeof focusTarget.focus === "function") {
+        focusTarget.focus();
+      }
+    });
+  })();
+
+  (function () {
+    const methodDataEl = document.getElementById("scoring-methods-data");
+    const scoringMethodSelect = document.getElementById("id_scoring_inputs-scoring_method");
+    const impactField = document.getElementById("id_scoring_inputs-impact");
+    const hint = document.getElementById("scoring-inputs-hint");
+    const submitBtn = document.getElementById("scoring-inputs-submit");
+    const ciaFields = [
+      document.getElementById("id_scoring_inputs-confidentiality"),
+      document.getElementById("id_scoring_inputs-integrity"),
+      document.getElementById("id_scoring_inputs-availability"),
+    ];
+    const dreadFields = [
+      document.getElementById("id_scoring_inputs-dread_damage"),
+      document.getElementById("id_scoring_inputs-dread_reproducibility"),
+      document.getElementById("id_scoring_inputs-dread_exploitability"),
+      document.getElementById("id_scoring_inputs-dread_affected_users"),
+      document.getElementById("id_scoring_inputs-dread_discoverability"),
+    ];
+    const owaspFields = [
+      document.getElementById("id_scoring_inputs-owasp_skill_level"),
+      document.getElementById("id_scoring_inputs-owasp_motive"),
+      document.getElementById("id_scoring_inputs-owasp_opportunity"),
+      document.getElementById("id_scoring_inputs-owasp_size"),
+      document.getElementById("id_scoring_inputs-owasp_ease_of_discovery"),
+      document.getElementById("id_scoring_inputs-owasp_ease_of_exploit"),
+      document.getElementById("id_scoring_inputs-owasp_awareness"),
+      document.getElementById("id_scoring_inputs-owasp_intrusion_detection"),
+      document.getElementById("id_scoring_inputs-owasp_loss_confidentiality"),
+      document.getElementById("id_scoring_inputs-owasp_loss_integrity"),
+      document.getElementById("id_scoring_inputs-owasp_loss_availability"),
+      document.getElementById("id_scoring_inputs-owasp_loss_accountability"),
+      document.getElementById("id_scoring_inputs-owasp_financial_damage"),
+      document.getElementById("id_scoring_inputs-owasp_reputation_damage"),
+      document.getElementById("id_scoring_inputs-owasp_non_compliance"),
+      document.getElementById("id_scoring_inputs-owasp_privacy_violation"),
+    ];
+    const cvssFields = [
+      document.getElementById("id_scoring_inputs-cvss_attack_vector"),
+      document.getElementById("id_scoring_inputs-cvss_attack_complexity"),
+      document.getElementById("id_scoring_inputs-cvss_authentication"),
+      document.getElementById("id_scoring_inputs-cvss_confidentiality_impact"),
+      document.getElementById("id_scoring_inputs-cvss_integrity_impact"),
+      document.getElementById("id_scoring_inputs-cvss_availability_impact"),
+      document.getElementById("id_scoring_inputs-cvss_exploitability"),
+      document.getElementById("id_scoring_inputs-cvss_remediation_level"),
+      document.getElementById("id_scoring_inputs-cvss_report_confidence"),
+      document.getElementById("id_scoring_inputs-cvss_collateral_damage_potential"),
+      document.getElementById("id_scoring_inputs-cvss_target_distribution"),
+      document.getElementById("id_scoring_inputs-cvss_confidentiality_requirement"),
+      document.getElementById("id_scoring_inputs-cvss_integrity_requirement"),
+      document.getElementById("id_scoring_inputs-cvss_availability_requirement"),
+    ];
+
+    function setFieldVisibility(field, show) {
+      if (!field) return;
+      const wrapper = field.closest("p") || field.parentElement;
+      if (wrapper) {
+        wrapper.style.display = show ? "" : "none";
+      }
+      field.disabled = !show;
+    }
+
+    function toggleScoringInputs() {
+      if (!scoringMethodSelect || !methodDataEl) return;
+      let methods = [];
+      try {
+        methods = JSON.parse(methodDataEl.textContent);
+      } catch (err) {
+        return;
+      }
+      const selectedId = parseInt(scoringMethodSelect.value || "0", 10);
+      const method = methods.find((item) => item.id === selectedId);
+      const isCia = method && method.method_type === "cia";
+      const isDread = method && method.method_type === "dread";
+      const isOwasp = method && method.method_type === "owasp";
+      const isCvss = method && method.method_type === "cvss";
+      const usesImpact = !isCia && !isDread && !isOwasp && !isCvss;
+      setFieldVisibility(impactField, usesImpact);
+      ciaFields.forEach((field) => setFieldVisibility(field, isCia));
+      dreadFields.forEach((field) => setFieldVisibility(field, isDread));
+      owaspFields.forEach((field) => setFieldVisibility(field, isOwasp));
+      cvssFields.forEach((field) => setFieldVisibility(field, isCvss));
+      if (hint) {
+        if (!method) {
+          hint.textContent = "";
+        } else if (isCia) {
+          hint.textContent = "{% trans 'CIA requires confidentiality, integrity, and availability values.' %}";
+        } else if (isDread) {
+          hint.textContent = "{% trans 'DREAD requires all DREAD factors.' %}";
+        } else if (isOwasp) {
+          hint.textContent = "{% trans 'OWASP requires all threat, vulnerability, and impact factors.' %}";
+        } else if (isCvss) {
+          hint.textContent = "{% trans 'CVSS requires all base, temporal, and environmental factors.' %}";
+        } else {
+          hint.textContent = "{% trans 'Provide likelihood and impact for this scoring method.' %}";
+        }
+      }
+      if (submitBtn) {
+        if (method && method.name) {
+          submitBtn.textContent = "{% trans 'Score using' %} " + method.name;
+        } else {
+          submitBtn.textContent = "{% trans 'Save Scoring Inputs' %}";
+        }
+      }
+    }
+
+    if (scoringMethodSelect) {
+      scoringMethodSelect.addEventListener("change", toggleScoringInputs);
+      toggleScoringInputs();
+    }
+  })();
+</script>
+
+<style>
+  dialog.modal {
+    width: min(960px, 96vw);
+    border: none;
+    padding: 0;
+    background: transparent;
+    display: none;
+    position: fixed;
+    inset: 0;
+    margin: auto;
+    z-index: 1000;
+  }
+  dialog.modal.is-open {
+    display: block;
+  }
+  dialog.modal::backdrop {
+    background: rgba(15, 45, 70, 0.6);
+  }
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 45, 70, 0.6);
+    z-index: 999;
+  }
+</style>
+<script>
+  (function () {
+    const buttons = document.querySelectorAll(".section-toggle");
+    if (!buttons.length) {
+      return;
+    }
+    buttons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const targetId = btn.getAttribute("data-target");
+        const target = document.getElementById(targetId);
+        if (!target) return;
+        target.style.display = target.style.display === "none" ? "block" : "none";
+      });
+    });
+  })();
+</script>
 {% endblock %}
 
 {% block extra_js %}

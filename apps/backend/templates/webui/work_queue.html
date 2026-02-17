@@ -33,7 +33,7 @@
     <div class="actions">
       <label for="window-filter">{% trans "Review Window (days)" %}</label>
       <input id="window-filter" type="number" min="1" max="30" name="review_window_days" value="{{ review_window_days }}" />
-      <button type="submit">{% trans "Filter" %}</button>
+      <button type="submit" class="btn btn-primary">{% trans "Filter" %}</button>
       <span id="work-queue-loading" class="muted htmx-indicator">{% trans "Loading..." %}</span>
     </div>
   </form>

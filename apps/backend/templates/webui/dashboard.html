@@ -7,8 +7,13 @@
   .metric-title { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: #5b6b79; }
   .metric-value { font-size: 24px; font-weight: 700; color: #16212a; }
   .metric-subtle { color: #5b6b79; font-size: 12px; margin-top: 4px; }
-  .chart-grid { display: grid; grid-template-columns: repeat(2, minmax(260px, 1fr)); gap: 16px; }
-  .chart-card { min-height: 280px; }
+  .chart-grid { display: grid; grid-template-columns: repeat(2, minmax(260px, 1fr)); gap: 16px; align-items: start; }
+  .chart-card { min-height: 280px; height: 280px; display: flex; flex-direction: column; }
+  .chart-card canvas { flex: 1 1 auto; max-height: 200px; }
+  .chart-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .quick-links { display: flex; flex-wrap: wrap; gap: 8px; }
+  .quick-link { display: inline-flex; align-items: center; padding: 6px 12px; border-radius: 999px; background: #e8f0fa; color: #1e2a36; text-decoration: none; font-weight: 600; font-size: 13px; }
+  .quick-link:hover { background: #d9e6f2; color: #1e2a36; }
   @media (max-width: 900px) {
     .row-golden { grid-template-columns: 1fr; }
     .chart-grid { grid-template-columns: 1fr; }
@@ -43,44 +48,58 @@
     <div class="metric-title">{% trans "Treatments" %}</div>
     <div class="metric-value">{{ treatment_count }}</div>
   </div>
+{% if can_manage_scoring %}
   <div class="metric-card">
     <div class="metric-title">{% trans "Scoring Methods" %}</div>
     <div class="metric-value">{{ scoring_method_count }}</div>
   </div>
+{% endif %}
 </div>
-<div class="kpi">
+<div class="kpi">{% if overdue_treatment_count %}
+
   <div class="metric-card">
     <div class="metric-title">{% trans "Overdue Treatments" %}</div>
     <div class="metric-value">{{ overdue_treatment_count }}</div>
     <div class="metric-subtle"><a href="{% url 'webui:work-queue' %}">{% trans "Open Work Queue" %}</a></div>
   </div>
+{% endif %}{% if upcoming_review_count %}
+
   <div class="metric-card">
     <div class="metric-title">{% trans "Upcoming Reviews (7d)" %}</div>
     <div class="metric-value">{{ upcoming_review_count }}</div>
     <div class="metric-subtle"><a href="{% url 'webui:work-queue' %}">{% trans "Open Work Queue" %}</a></div>
   </div>
+{% endif %}{% if pending_approval_count %}
+
   <div class="metric-card">
     <div class="metric-title">{% trans "Pending Approvals" %}</div>
     <div class="metric-value">{{ pending_approval_count }}</div>
     <div class="metric-subtle"><a href="{% url 'webui:risk-list' %}">{% trans "Open Risks" %}</a></div>
   </div>
+{% endif %}
 </div>
-<div class="kpi">
+<div class="kpi">{% if open_issue_count %}
+
   <div class="metric-card">
     <div class="metric-title">{% trans "Open Issues" %}</div>
     <div class="metric-value">{{ open_issue_count }}</div>
     <div class="metric-subtle"><a href="{% url 'webui:risk-issues' %}">{% trans "View Issues" %}</a></div>
   </div>
+{% endif %}{% if open_exception_count %}
+
   <div class="metric-card">
     <div class="metric-title">{% trans "Active Exceptions" %}</div>
     <div class="metric-value">{{ open_exception_count }}</div>
     <div class="metric-subtle"><a href="{% url 'webui:risk-exceptions' %}">{% trans "View Exceptions" %}</a></div>
   </div>
+{% endif %}{% if unread_notification_count %}
+
   <div class="metric-card">
     <div class="metric-title">{% trans "Unread Notifications" %}</div>
     <div class="metric-value">{{ unread_notification_count }}</div>
     <div class="metric-subtle"><a href="{% url 'webui:risk-notifications' %}">{% trans "Open Notifications" %}</a></div>
   </div>
+{% endif %}
 </div>
 <div class="kpi">
   <div class="metric-card">
@@ -91,12 +110,15 @@
     <div class="metric-title">{% trans "Vulnerabilities" %}</div>
     <div class="metric-value">{{ vulnerability_count }}</div>
   </div>
+{% if can_manage_governance %}
   <div class="metric-card">
     <div class="metric-title">{% trans "Governance Programs" %}</div>
     <div class="metric-value">{{ governance_program_count }}</div>
   </div>
+{% endif %}
 </div>
 <div class="kpi">
+{% if can_view_compliance %}
   <div class="metric-card">
     <div class="metric-title">{% trans "Compliance Frameworks" %}</div>
     <div class="metric-value">{{ compliance_framework_count }}</div>
@@ -105,6 +127,7 @@
     <div class="metric-title">{% trans "Compliance Requirements" %}</div>
     <div class="metric-value">{{ compliance_requirement_count }}</div>
   </div>
+{% endif %}
   <div class="metric-card">
     <div class="metric-title">{% trans "Reports" %}</div>
     <div class="metric-value">{{ report_schedule_count }}</div>
@@ -114,40 +137,40 @@
 <div class="card">
   <h3>{% trans "Quick Links" %}</h3>
   <p class="muted">{% trans "Jump to common operational tasks." %}</p>
-  <div class="actions">
-    <a href="{% url 'webui:risk-list' %}">{% trans "Risk Register" %}</a>
-    <a href="{% url 'webui:risk-heatmap' %}">{% trans "Risk Heatmap" %}</a>
-    <a href="{% url 'webui:location-tree' %}">{% trans "Location Tree" %}</a>
-    <a href="{% url 'webui:risk-controls' %}">{% trans "Controls Library" %}</a>
-    <a href="{% url 'webui:risk-reports' %}">{% trans "Scheduled Reports" %}</a>
+  <div class="quick-links">
+    <a class="quick-link" href="{% url 'webui:risk-list' %}">{% trans "Risk Register" %}</a>
+    <a class="quick-link" href="{% url 'webui:risk-heatmap' %}">{% trans "Risk Heatmap" %}</a>
+    <a class="quick-link" href="{% url 'webui:location-tree' %}">{% trans "Location Tree" %}</a>
+    <a class="quick-link" href="{% url 'webui:risk-controls' %}">{% trans "Controls Library" %}</a>
+    <a class="quick-link" href="{% url 'webui:risk-reports' %}">{% trans "Scheduled Reports" %}</a>
   </div>
 </div>
 <div class="card">
   <h3>{% trans "Status Charts" %}</h3>
   <div class="chart-grid" style="margin-top: 12px;">
     <div class="card chart-card">
-      <div class="actions" style="justify-content: space-between;">
+      <div class="chart-header">
         <h4 style="margin: 0;">{% trans "Risk Status Distribution" %}</h4>
         <a class="btn btn-outline-secondary btn-sm" href="{% url 'webui:reports-export' 'risk_status' %}">{% trans "Export CSV" %}</a>
       </div>
       <canvas id="risk-status-chart" height="180"></canvas>
     </div>
     <div class="card chart-card">
-      <div class="actions" style="justify-content: space-between;">
+      <div class="chart-header">
         <h4 style="margin: 0;">{% trans "Vulnerability Status Distribution" %}</h4>
         <a class="btn btn-outline-secondary btn-sm" href="{% url 'webui:reports-export' 'vulnerability_status' %}">{% trans "Export CSV" %}</a>
       </div>
       <canvas id="vuln-status-chart" height="180"></canvas>
     </div>
     <div class="card chart-card">
-      <div class="actions" style="justify-content: space-between;">
+      <div class="chart-header">
         <h4 style="margin: 0;">{% trans "Vulnerability Severity Distribution" %}</h4>
         <a class="btn btn-outline-secondary btn-sm" href="{% url 'webui:reports-export' 'vulnerability_severity' %}">{% trans "Export CSV" %}</a>
       </div>
       <canvas id="vuln-severity-chart" height="180"></canvas>
     </div>
     <div class="card chart-card">
-      <div class="actions" style="justify-content: space-between;">
+      <div class="chart-header">
         <h4 style="margin: 0;">{% trans "Compliance Status Distribution" %}</h4>
         <a class="btn btn-outline-secondary btn-sm" href="{% url 'webui:reports-export' 'compliance_status' %}">{% trans "Export CSV" %}</a>
       </div>
@@ -159,7 +182,7 @@
   <div class="card">
     <h3>{% trans "Last EAM Sync" %}</h3>
     {% if last_sync %}
-      <p>{% trans "Status" %}: {{ last_sync.status }}</p>
+      <p>{% trans "Status" %}: {{ last_sync.get_status_display }}</p>
       <p>{% trans "Plugin" %}: {{ last_sync.plugin_name }}:{{ last_sync.plugin_version }}</p>
       <p>{% trans "At" %}: {{ last_sync.created_at|date:"Y-m-d H:i" }}</p>
     {% else %}
@@ -170,7 +193,7 @@
     <h3>{% trans "Last Scheduled Report" %}</h3>
     {% if last_report_run %}
       <p>{% trans "Schedule" %}: {{ last_report_run.schedule.name }}</p>
-      <p>{% trans "Status" %}: {{ last_report_run.status }}</p>
+      <p>{% trans "Status" %}: {{ last_report_run.get_status_display }}</p>
       <p>{% trans "At" %}: {{ last_report_run.created_at|date:"Y-m-d H:i" }}</p>
     {% else %}
       <p>{% trans "No report run yet." %}</p>

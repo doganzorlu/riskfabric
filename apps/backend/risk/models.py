@@ -2,6 +2,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 from asset.models import Asset, AssetType, BusinessUnit, CostCenter, Section
 
@@ -10,10 +11,20 @@ class RiskScoringMethod(models.Model):
     METHOD_INHERENT = "inherent"
     METHOD_RESIDUAL = "residual"
     METHOD_CUSTOM = "custom"
+    METHOD_CVSS = "cvss"
+    METHOD_DREAD = "dread"
+    METHOD_CLASSIC = "classic"
+    METHOD_OWASP = "owasp"
+    METHOD_CIA = "cia"
     METHOD_TYPE_CHOICES = [
         (METHOD_INHERENT, "Inherent"),
         (METHOD_RESIDUAL, "Residual"),
         (METHOD_CUSTOM, "Custom"),
+        (METHOD_CVSS, "CVSS"),
+        (METHOD_DREAD, "DREAD"),
+        (METHOD_CLASSIC, "Classic"),
+        (METHOD_OWASP, "OWASP"),
+        (METHOD_CIA, "CIA"),
     ]
 
     code = models.CharField(max_length=64, unique=True)
@@ -77,6 +88,452 @@ class RiskControl(models.Model):
         return f"{self.code} - {self.name}"
 
 
+class RiskSource(models.Model):
+    name = models.CharField(max_length=128, unique=True)
+    description = models.CharField(max_length=255, blank=True)
+    is_active = models.BooleanField(default=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["name"]
+
+    def __str__(self) -> str:
+        return self.name
+
+
+class CriticalService(models.Model):
+    STATUS_DRAFT = "draft"
+    STATUS_ACTIVE = "active"
+    STATUS_RETIRED = "retired"
+    STATUS_CHOICES = [
+        (STATUS_DRAFT, "Draft"),
+        (STATUS_ACTIVE, "Active"),
+        (STATUS_RETIRED, "Retired"),
+    ]
+
+    code = models.CharField(max_length=64, unique=True)
+    name = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+    owner = models.CharField(max_length=255, blank=True)
+    status = models.CharField(max_length=32, choices=STATUS_CHOICES, default=STATUS_DRAFT)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["name"]
+
+    def __str__(self) -> str:
+        return f"{self.code} - {self.name}"
+
+
+class ServiceProcess(models.Model):
+    CRITICALITY_LOW = "low"
+    CRITICALITY_MEDIUM = "medium"
+    CRITICALITY_HIGH = "high"
+    CRITICALITY_CHOICES = [
+        (CRITICALITY_LOW, "Low"),
+        (CRITICALITY_MEDIUM, "Medium"),
+        (CRITICALITY_HIGH, "High"),
+    ]
+
+    service = models.ForeignKey(CriticalService, on_delete=models.CASCADE, related_name="processes")
+    code = models.CharField(max_length=64)
+    name = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+    criticality = models.CharField(max_length=16, choices=CRITICALITY_CHOICES, default=CRITICALITY_MEDIUM)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["name"]
+        constraints = [
+            models.UniqueConstraint(fields=["service", "code"], name="uq_service_process_code")
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.service.code}:{self.code}"
+
+
+class ServiceAssetMapping(models.Model):
+    ROLE_PRIMARY = "primary"
+    ROLE_SUPPORT = "support"
+    ROLE_CHOICES = [
+        (ROLE_PRIMARY, "Primary"),
+        (ROLE_SUPPORT, "Support"),
+    ]
+
+    service = models.ForeignKey(CriticalService, on_delete=models.CASCADE, related_name="asset_mappings")
+    process = models.ForeignKey(ServiceProcess, on_delete=models.SET_NULL, null=True, blank=True, related_name="asset_mappings")
+    asset = models.ForeignKey(Asset, on_delete=models.CASCADE, related_name="service_mappings")
+    role = models.CharField(max_length=16, choices=ROLE_CHOICES, default=ROLE_SUPPORT)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["service", "process", "asset"], name="uq_service_process_asset")
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.service.code}:{self.asset.asset_code}"
+
+
+class Hazard(models.Model):
+    TYPE_NATURAL = "natural"
+    TYPE_INDUSTRIAL = "industrial"
+    TYPE_UTILITY = "utility"
+    TYPE_CYBER = "cyber"
+    TYPE_CHOICES = [
+        (TYPE_NATURAL, "Natural"),
+        (TYPE_INDUSTRIAL, "Industrial"),
+        (TYPE_UTILITY, "Utility"),
+        (TYPE_CYBER, "Cyber"),
+    ]
+
+    code = models.CharField(max_length=64, unique=True)
+    name = models.CharField(max_length=255)
+    hazard_type = models.CharField(max_length=32, choices=TYPE_CHOICES, default=TYPE_UTILITY)
+    description = models.TextField(blank=True)
+    default_likelihood = models.DecimalField(max_digits=5, decimal_places=2, default=0.0)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["name"]
+
+    def __str__(self) -> str:
+        return f"{self.code} - {self.name}"
+
+
+class HazardLink(models.Model):
+    hazard = models.ForeignKey(Hazard, on_delete=models.CASCADE, related_name="links")
+    asset = models.ForeignKey(Asset, on_delete=models.CASCADE, null=True, blank=True, related_name="hazard_links")
+    service = models.ForeignKey(CriticalService, on_delete=models.CASCADE, null=True, blank=True, related_name="hazard_links")
+    impact_multiplier = models.DecimalField(max_digits=5, decimal_places=2, default=1.0)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                check=(
+                    models.Q(asset__isnull=False)
+                    | models.Q(service__isnull=False)
+                ),
+                name="ck_hazard_link_target",
+            )
+        ]
+
+    def __str__(self) -> str:
+        target = self.asset.asset_code if self.asset_id else self.service.code
+        return f"{self.hazard.code}:{target}"
+
+
+class ServiceBIAProfile(models.Model):
+    CRITICALITY_LIFE = "LIFE_CRITICAL"
+    CRITICALITY_ENVIRONMENT = "ENVIRONMENT_CRITICAL"
+    CRITICALITY_INFRASTRUCTURE = "INFRASTRUCTURE_CRITICAL"
+    CRITICALITY_BUSINESS = "BUSINESS_CRITICAL"
+    CRITICALITY_SUPPORT = "SUPPORT_SERVICE"
+    CRITICALITY_CHOICES = [
+        (CRITICALITY_LIFE, _("Life critical")),
+        (CRITICALITY_ENVIRONMENT, _("Environment critical")),
+        (CRITICALITY_INFRASTRUCTURE, _("Infrastructure critical")),
+        (CRITICALITY_BUSINESS, _("Business critical")),
+        (CRITICALITY_SUPPORT, _("Support service")),
+    ]
+
+    IMPACT_LEVEL_MINOR = "MINOR"
+    IMPACT_LEVEL_DEGRADED = "DEGRADED"
+    IMPACT_LEVEL_SEVERE = "SEVERE"
+    IMPACT_LEVEL_CRITICAL = "CRITICAL"
+    IMPACT_LEVEL_CATASTROPHIC = "CATASTROPHIC"
+    IMPACT_LEVEL_CHOICES = [
+        IMPACT_LEVEL_MINOR,
+        IMPACT_LEVEL_DEGRADED,
+        IMPACT_LEVEL_SEVERE,
+        IMPACT_LEVEL_CRITICAL,
+        IMPACT_LEVEL_CATASTROPHIC,
+    ]
+
+    service = models.OneToOneField(
+        CriticalService,
+        on_delete=models.CASCADE,
+        related_name="bia_profile",
+        verbose_name=_("Service"),
+    )
+    mao_hours = models.PositiveIntegerField(default=24, verbose_name=_("MAO/MTPD (h)"))
+    rto_hours = models.PositiveIntegerField(default=8, verbose_name=_("RTO (h)"))
+    rpo_hours = models.PositiveIntegerField(default=4, verbose_name=_("RPO (h)"))
+    service_criticality = models.CharField(
+        max_length=32,
+        choices=CRITICALITY_CHOICES,
+        default=CRITICALITY_SUPPORT,
+        verbose_name=_("Service criticality"),
+    )
+    impact_operational = models.PositiveSmallIntegerField(
+        default=0,
+        validators=[MinValueValidator(0), MaxValueValidator(5)],
+        verbose_name=_("Operational impact"),
+    )
+    impact_financial = models.PositiveSmallIntegerField(
+        default=0,
+        validators=[MinValueValidator(0), MaxValueValidator(5)],
+        verbose_name=_("Financial impact"),
+    )
+    impact_environmental = models.PositiveSmallIntegerField(
+        default=0,
+        validators=[MinValueValidator(0), MaxValueValidator(5)],
+        verbose_name=_("Environmental impact"),
+    )
+    impact_safety = models.PositiveSmallIntegerField(
+        default=0,
+        validators=[MinValueValidator(0), MaxValueValidator(5)],
+        verbose_name=_("Safety impact"),
+    )
+    impact_legal = models.PositiveSmallIntegerField(
+        default=0,
+        validators=[MinValueValidator(0), MaxValueValidator(5)],
+        verbose_name=_("Legal impact"),
+    )
+    impact_reputation = models.PositiveSmallIntegerField(
+        default=0,
+        validators=[MinValueValidator(0), MaxValueValidator(5)],
+        verbose_name=_("Reputation impact"),
+    )
+    impact_escalation_curve = models.JSONField(null=True, blank=True, verbose_name=_("Impact escalation curve"))
+    crisis_trigger_rules = models.JSONField(null=True, blank=True, verbose_name=_("Crisis trigger rules"))
+    notes = models.TextField(blank=True, verbose_name=_("Notes"))
+
+    @staticmethod
+    def validate_impact_escalation_curve(curve, mtpd_minutes: int) -> None:
+        if curve is None or curve == []:
+            return
+        if isinstance(curve, str):
+            try:
+                import json
+
+                curve = json.loads(curve)
+            except json.JSONDecodeError as exc:
+                raise ValidationError(_("Invalid escalation curve JSON.")) from exc
+        if not isinstance(curve, list):
+            raise ValidationError(_("Escalation curve must be a list of steps."))
+
+        seen_times = set()
+        previous_time = None
+        for idx, step in enumerate(curve, start=1):
+            if not isinstance(step, dict):
+                raise ValidationError(_("Escalation step %(step)s must be an object."), params={"step": idx})
+            time_minutes = step.get("time_minutes")
+            level = step.get("level")
+            if time_minutes is None or level is None:
+                raise ValidationError(_("Escalation step %(step)s must include time_minutes and level."), params={"step": idx})
+            if not isinstance(time_minutes, int):
+                raise ValidationError(_("Escalation step %(step)s time must be integer minutes."), params={"step": idx})
+            if time_minutes <= 0:
+                raise ValidationError(_("Escalation step %(step)s time must be greater than 0."), params={"step": idx})
+            if time_minutes in seen_times:
+                raise ValidationError(_("Escalation step times must be unique."))
+            if previous_time is not None and time_minutes <= previous_time:
+                raise ValidationError(_("Escalation step times must be strictly increasing."))
+            if level not in ServiceBIAProfile.IMPACT_LEVEL_CHOICES:
+                raise ValidationError(_("Escalation level must be one of: %(levels)s."), params={"levels": ", ".join(ServiceBIAProfile.IMPACT_LEVEL_CHOICES)})
+            seen_times.add(time_minutes)
+            previous_time = time_minutes
+
+        if mtpd_minutes <= 0:
+            raise ValidationError(_("MTPD must be greater than 0 to validate escalation curve."))
+        if previous_time is not None and previous_time < mtpd_minutes:
+            raise ValidationError(_("Last escalation step must be greater than or equal to MTPD."))
+
+    @staticmethod
+    def validate_crisis_trigger_rules(rules) -> None:
+        if rules is None or rules == {}:
+            return
+        if isinstance(rules, str):
+            try:
+                import json
+
+                rules = json.loads(rules)
+            except json.JSONDecodeError as exc:
+                raise ValidationError(_("Invalid crisis trigger rules JSON.")) from exc
+        if not isinstance(rules, dict):
+            raise ValidationError(_("Crisis trigger rules must be an object."))
+
+        allowed_keys = {
+            "mtpd_percentage_trigger",
+            "impact_level_trigger",
+            "environmental_severity_trigger",
+            "safety_severity_trigger",
+        }
+        unknown_keys = set(rules.keys()) - allowed_keys
+        if unknown_keys:
+            raise ValidationError(_("Crisis trigger rules contain unsupported keys: %(keys)s."), params={"keys": ", ".join(sorted(unknown_keys))})
+
+        if "mtpd_percentage_trigger" in rules:
+            value = rules["mtpd_percentage_trigger"]
+            if not isinstance(value, (int, float)):
+                raise ValidationError(_("mtpd_percentage_trigger must be a number."))
+            if value <= 0 or value > 1:
+                raise ValidationError(_("mtpd_percentage_trigger must be between 0 and 1."))
+        if "impact_level_trigger" in rules:
+            value = rules["impact_level_trigger"]
+            if not isinstance(value, str):
+                raise ValidationError(_("impact_level_trigger must be a string."))
+            if value not in ServiceBIAProfile.IMPACT_LEVEL_CHOICES:
+                raise ValidationError(_("impact_level_trigger must be one of: %(levels)s."), params={"levels": ", ".join(ServiceBIAProfile.IMPACT_LEVEL_CHOICES)})
+        if "environmental_severity_trigger" in rules:
+            value = rules["environmental_severity_trigger"]
+            if value is not None and not isinstance(value, int):
+                raise ValidationError(_("environmental_severity_trigger must be an integer."))
+            if value is not None and not (0 <= value <= 5):
+                raise ValidationError(_("environmental_severity_trigger must be between 0 and 5."))
+        if "safety_severity_trigger" in rules:
+            value = rules["safety_severity_trigger"]
+            if value is not None and not isinstance(value, int):
+                raise ValidationError(_("safety_severity_trigger must be an integer."))
+            if value is not None and not (0 <= value <= 5):
+                raise ValidationError(_("safety_severity_trigger must be between 0 and 5."))
+
+    def clean(self) -> None:
+        super().clean()
+        mtpd_minutes = int(self.mao_hours) * 60
+        self.validate_impact_escalation_curve(self.impact_escalation_curve, mtpd_minutes)
+        self.validate_crisis_trigger_rules(self.crisis_trigger_rules)
+
+    @property
+    def mtpd_minutes(self) -> int:
+        return int(self.mao_hours) * 60
+
+    @property
+    def rto_minutes(self) -> int:
+        return int(self.rto_hours) * 60
+
+    @property
+    def rpo_minutes(self) -> int:
+        return int(self.rpo_hours) * 60
+
+    def __str__(self) -> str:
+        return f"{self.service.code} BIA"
+
+
+class ImpactEscalationCurve(models.Model):
+    CATEGORY_FINANCIAL = "financial"
+    CATEGORY_OPERATIONAL = "operational"
+    CATEGORY_LEGAL = "legal"
+    CATEGORY_REPUTATIONAL = "reputational"
+    CATEGORY_ENVIRONMENTAL = "environmental"
+    CATEGORY_HUMAN_SAFETY = "human_safety"
+    CATEGORY_CHOICES = [
+        (CATEGORY_FINANCIAL, "Financial"),
+        (CATEGORY_OPERATIONAL, "Operational"),
+        (CATEGORY_LEGAL, "Legal"),
+        (CATEGORY_REPUTATIONAL, "Reputational"),
+        (CATEGORY_ENVIRONMENTAL, "Environmental"),
+        (CATEGORY_HUMAN_SAFETY, "Human Safety"),
+    ]
+
+    bia_profile = models.ForeignKey(ServiceBIAProfile, on_delete=models.CASCADE, related_name="impact_curves")
+    impact_category = models.CharField(max_length=32, choices=CATEGORY_CHOICES)
+    t1_hours = models.PositiveIntegerField(default=1)
+    t1_label = models.CharField(max_length=255)
+    t2_hours = models.PositiveIntegerField(default=4)
+    t2_label = models.CharField(max_length=255)
+    t3_hours = models.PositiveIntegerField(default=8)
+    t3_label = models.CharField(max_length=255)
+    t4_hours = models.PositiveIntegerField(default=24)
+    t4_label = models.CharField(max_length=255)
+    t5_hours = models.PositiveIntegerField(default=72)
+    t5_label = models.CharField(max_length=255)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["bia_profile", "impact_category"], name="uq_bia_category")
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.bia_profile.service.code}:{self.impact_category}"
+
+
+class Scenario(models.Model):
+    name = models.CharField(max_length=255)
+    hazard = models.ForeignKey(Hazard, on_delete=models.CASCADE, related_name="scenarios")
+    duration_hours = models.PositiveIntegerField(default=4)
+    notes = models.TextField(blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self) -> str:
+        return self.name
+
+
+class ContinuityStrategy(models.Model):
+    STATUS_DRAFT = "draft"
+    STATUS_ACTIVE = "active"
+    STATUS_RETIRED = "retired"
+    STATUS_CHOICES = [
+        (STATUS_DRAFT, _("Draft")),
+        (STATUS_ACTIVE, _("Active")),
+        (STATUS_RETIRED, _("Retired")),
+    ]
+
+    READINESS_PLANNED = "planned"
+    READINESS_IN_PROGRESS = "in_progress"
+    READINESS_READY = "ready"
+    READINESS_TESTED = "tested"
+    READINESS_CHOICES = [
+        (READINESS_PLANNED, _("Planned")),
+        (READINESS_IN_PROGRESS, _("In Progress")),
+        (READINESS_READY, _("Ready")),
+        (READINESS_TESTED, _("Tested")),
+    ]
+
+    TYPE_REDUNDANCY = "redundancy"
+    TYPE_BACKUP = "backup"
+    TYPE_MANUAL = "manual"
+    TYPE_VENDOR = "vendor"
+    TYPE_WORKAROUND = "workaround"
+    TYPE_CHOICES = [
+        (TYPE_REDUNDANCY, _("Redundancy")),
+        (TYPE_BACKUP, _("Backup")),
+        (TYPE_MANUAL, _("Manual")),
+        (TYPE_VENDOR, _("Vendor")),
+        (TYPE_WORKAROUND, _("Workaround")),
+    ]
+
+    code = models.CharField(max_length=64, unique=True)
+    name = models.CharField(max_length=255)
+    strategy_type = models.CharField(max_length=32, choices=TYPE_CHOICES, default=TYPE_BACKUP)
+    status = models.CharField(max_length=32, choices=STATUS_CHOICES, default=STATUS_DRAFT)
+    readiness_level = models.CharField(max_length=32, choices=READINESS_CHOICES, default=READINESS_PLANNED)
+    service = models.ForeignKey(CriticalService, on_delete=models.PROTECT, related_name="continuity_strategies")
+    bia_profile = models.ForeignKey(ServiceBIAProfile, on_delete=models.SET_NULL, null=True, blank=True, related_name="continuity_strategies")
+    scenario = models.ForeignKey(Scenario, on_delete=models.SET_NULL, null=True, blank=True, related_name="continuity_strategies")
+    rto_target_hours = models.PositiveIntegerField(default=8)
+    rpo_target_hours = models.PositiveIntegerField(default=4)
+    owner = models.CharField(max_length=255, blank=True)
+    notes = models.TextField(blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["code"]
+
+    def __str__(self) -> str:
+        return f"{self.code} - {self.name}"
+
+
 class Risk(models.Model):
     STATUS_OPEN = "open"
     STATUS_IN_PROGRESS = "in_progress"
@@ -94,6 +551,24 @@ class Risk(models.Model):
 
     likelihood = models.PositiveSmallIntegerField(default=1, validators=[MinValueValidator(1), MaxValueValidator(5)])
     impact = models.PositiveSmallIntegerField(default=1, validators=[MinValueValidator(1), MaxValueValidator(5)])
+    confidentiality = models.PositiveSmallIntegerField(
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(1), MaxValueValidator(5)],
+        verbose_name=_("Confidentiality"),
+    )
+    integrity = models.PositiveSmallIntegerField(
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(1), MaxValueValidator(5)],
+        verbose_name=_("Integrity"),
+    )
+    availability = models.PositiveSmallIntegerField(
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(1), MaxValueValidator(5)],
+        verbose_name=_("Availability"),
+    )
     inherent_score = models.DecimalField(max_digits=8, decimal_places=2, default=0)
     residual_score = models.DecimalField(max_digits=8, decimal_places=2, default=0)
 
@@ -116,6 +591,14 @@ class Risk(models.Model):
         blank=True,
         related_name="risks",
     )
+    critical_service = models.ForeignKey(
+        CriticalService,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="risks",
+    )
+    dynamic_risk_score = models.DecimalField(max_digits=8, decimal_places=2, default=0)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -156,6 +639,13 @@ class Risk(models.Model):
         residual = max(inherent * (1.0 - min(treatment_effect, 0.95)), 0.0)
         return inherent, residual
 
+    def _calculate_cia_impact(self) -> int | None:
+        if self.confidentiality is None or self.integrity is None or self.availability is None:
+            return None
+        avg = (self.confidentiality + self.integrity + self.availability) / 3.0
+        score = int(round(avg))
+        return min(max(score, 1), 5)
+
     def refresh_scores(self, actor: str = "system") -> None:
         inherent, residual = self.calculate_scores()
         self.inherent_score = round(inherent, 2)
@@ -173,6 +663,10 @@ class Risk(models.Model):
     def save(self, *args, **kwargs):
         if self.primary_asset_id:
             self.sync_context_from_primary_asset()
+        if self.scoring_method and self.scoring_method.method_type == RiskScoringMethod.METHOD_CIA:
+            cia_impact = self._calculate_cia_impact()
+            if cia_impact is not None:
+                self.impact = cia_impact
         super().save(*args, **kwargs)
 
     def can_transition_to(self, new_status: str) -> bool:
@@ -197,6 +691,62 @@ class RiskScoringSnapshot(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
+
+
+class RiskScoringDread(models.Model):
+    risk = models.OneToOneField(Risk, on_delete=models.CASCADE, related_name="dread_inputs")
+    damage = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+    reproducibility = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+    exploitability = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+    affected_users = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+    discoverability = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+
+class RiskScoringOwasp(models.Model):
+    risk = models.OneToOneField(Risk, on_delete=models.CASCADE, related_name="owasp_inputs")
+    skill_level = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+    motive = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+    opportunity = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+    size = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+    ease_of_discovery = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+    ease_of_exploit = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+    awareness = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+    intrusion_detection = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+    loss_confidentiality = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+    loss_integrity = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+    loss_availability = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+    loss_accountability = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+    financial_damage = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+    reputation_damage = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+    non_compliance = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+    privacy_violation = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+
+class RiskScoringCvss(models.Model):
+    risk = models.OneToOneField(Risk, on_delete=models.CASCADE, related_name="cvss_inputs")
+    attack_vector = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+    attack_complexity = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+    authentication = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+    confidentiality_impact = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+    integrity_impact = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+    availability_impact = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+    exploitability = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+    remediation_level = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+    report_confidence = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+    collateral_damage_potential = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+    target_distribution = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+    confidentiality_requirement = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+    integrity_requirement = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+    availability_requirement = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
 
 class RiskTreatment(models.Model):
@@ -501,19 +1051,19 @@ class PolicyStandard(models.Model):
     STATUS_ACTIVE = "active"
     STATUS_RETIRED = "retired"
     STATUS_CHOICES = [
-        (STATUS_DRAFT, "Draft"),
-        (STATUS_ACTIVE, "Active"),
-        (STATUS_RETIRED, "Retired"),
+        (STATUS_DRAFT, _("Draft")),
+        (STATUS_ACTIVE, _("Active")),
+        (STATUS_RETIRED, _("Retired")),
     ]
 
-    name = models.CharField(max_length=255)
-    code = models.CharField(max_length=64, unique=True)
-    category = models.CharField(max_length=128, blank=True)
-    owner = models.CharField(max_length=255, blank=True)
-    status = models.CharField(max_length=32, choices=STATUS_CHOICES, default=STATUS_DRAFT)
-    effective_date = models.DateField(null=True, blank=True)
-    review_date = models.DateField(null=True, blank=True)
-    description = models.TextField(blank=True)
+    name = models.CharField(max_length=255, verbose_name=_("Name"))
+    code = models.CharField(max_length=64, unique=True, verbose_name=_("Code"))
+    category = models.CharField(max_length=128, blank=True, verbose_name=_("Category"))
+    owner = models.CharField(max_length=255, blank=True, verbose_name=_("Owner"))
+    status = models.CharField(max_length=32, choices=STATUS_CHOICES, default=STATUS_DRAFT, verbose_name=_("Status"))
+    effective_date = models.DateField(null=True, blank=True, verbose_name=_("Effective date"))
+    review_date = models.DateField(null=True, blank=True, verbose_name=_("Review date"))
+    description = models.TextField(blank=True, verbose_name=_("Description"))
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -526,9 +1076,9 @@ class PolicyStandard(models.Model):
 
 
 class PolicyControlMapping(models.Model):
-    policy = models.ForeignKey(PolicyStandard, on_delete=models.CASCADE, related_name="control_mappings")
-    control = models.ForeignKey(RiskControl, on_delete=models.CASCADE, related_name="policy_mappings")
-    notes = models.CharField(max_length=255, blank=True)
+    policy = models.ForeignKey(PolicyStandard, on_delete=models.CASCADE, related_name="control_mappings", verbose_name=_("Policy"))
+    control = models.ForeignKey(RiskControl, on_delete=models.CASCADE, related_name="policy_mappings", verbose_name=_("Control"))
+    notes = models.CharField(max_length=255, blank=True, verbose_name=_("Notes"))
 
     class Meta:
         constraints = [
@@ -540,9 +1090,9 @@ class PolicyControlMapping(models.Model):
 
 
 class PolicyRiskMapping(models.Model):
-    policy = models.ForeignKey(PolicyStandard, on_delete=models.CASCADE, related_name="risk_mappings")
-    risk = models.ForeignKey(Risk, on_delete=models.CASCADE, related_name="policy_mappings")
-    notes = models.CharField(max_length=255, blank=True)
+    policy = models.ForeignKey(PolicyStandard, on_delete=models.CASCADE, related_name="risk_mappings", verbose_name=_("Policy"))
+    risk = models.ForeignKey(Risk, on_delete=models.CASCADE, related_name="policy_mappings", verbose_name=_("Risk"))
+    notes = models.CharField(max_length=255, blank=True, verbose_name=_("Notes"))
 
     class Meta:
         constraints = [
@@ -558,16 +1108,16 @@ class ControlTestPlan(models.Model):
     FREQUENCY_SEMI_ANNUAL = "semi_annual"
     FREQUENCY_ANNUAL = "annual"
     FREQUENCY_CHOICES = [
-        (FREQUENCY_QUARTERLY, "Quarterly"),
-        (FREQUENCY_SEMI_ANNUAL, "Semi-Annual"),
-        (FREQUENCY_ANNUAL, "Annual"),
+        (FREQUENCY_QUARTERLY, _("Quarterly")),
+        (FREQUENCY_SEMI_ANNUAL, _("Semi-Annual")),
+        (FREQUENCY_ANNUAL, _("Annual")),
     ]
 
-    control = models.ForeignKey(RiskControl, on_delete=models.CASCADE, related_name="test_plans")
-    owner = models.CharField(max_length=255, blank=True)
-    frequency = models.CharField(max_length=32, choices=FREQUENCY_CHOICES, default=FREQUENCY_ANNUAL)
-    next_due_date = models.DateField(null=True, blank=True)
-    notes = models.TextField(blank=True)
+    control = models.ForeignKey(RiskControl, on_delete=models.CASCADE, related_name="test_plans", verbose_name=_("Control"))
+    owner = models.CharField(max_length=255, blank=True, verbose_name=_("Owner"))
+    frequency = models.CharField(max_length=32, choices=FREQUENCY_CHOICES, default=FREQUENCY_ANNUAL, verbose_name=_("Frequency"))
+    next_due_date = models.DateField(null=True, blank=True, verbose_name=_("Next due date"))
+    notes = models.TextField(blank=True, verbose_name=_("Notes"))
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -584,17 +1134,21 @@ class ControlTestRun(models.Model):
     RESULT_FAIL = "fail"
     RESULT_INCONCLUSIVE = "inconclusive"
     RESULT_CHOICES = [
-        (RESULT_PASS, "Pass"),
-        (RESULT_FAIL, "Fail"),
-        (RESULT_INCONCLUSIVE, "Inconclusive"),
+        (RESULT_PASS, _("Pass")),
+        (RESULT_FAIL, _("Fail")),
+        (RESULT_INCONCLUSIVE, _("Inconclusive")),
     ]
 
-    plan = models.ForeignKey(ControlTestPlan, on_delete=models.CASCADE, related_name="runs")
-    tested_at = models.DateField()
-    tester = models.CharField(max_length=255, blank=True)
-    result = models.CharField(max_length=32, choices=RESULT_CHOICES)
-    effectiveness_score = models.PositiveSmallIntegerField(default=3, validators=[MinValueValidator(1), MaxValueValidator(5)])
-    notes = models.TextField(blank=True)
+    plan = models.ForeignKey(ControlTestPlan, on_delete=models.CASCADE, related_name="runs", verbose_name=_("Plan"))
+    tested_at = models.DateField(verbose_name=_("Tested at"))
+    tester = models.CharField(max_length=255, blank=True, verbose_name=_("Tester"))
+    result = models.CharField(max_length=32, choices=RESULT_CHOICES, verbose_name=_("Result"))
+    effectiveness_score = models.PositiveSmallIntegerField(
+        default=3,
+        validators=[MinValueValidator(1), MaxValueValidator(5)],
+        verbose_name=_("Effectiveness score"),
+    )
+    notes = models.TextField(blank=True, verbose_name=_("Notes"))
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -611,16 +1165,16 @@ class GovernanceProgram(models.Model):
     STATUS_ACTIVE = "active"
     STATUS_RETIRED = "retired"
     STATUS_CHOICES = [
-        (STATUS_DRAFT, "Draft"),
-        (STATUS_ACTIVE, "Active"),
-        (STATUS_RETIRED, "Retired"),
+        (STATUS_DRAFT, _("Draft")),
+        (STATUS_ACTIVE, _("Active")),
+        (STATUS_RETIRED, _("Retired")),
     ]
 
-    name = models.CharField(max_length=255)
-    owner = models.CharField(max_length=255, blank=True)
-    status = models.CharField(max_length=32, choices=STATUS_CHOICES, default=STATUS_DRAFT)
-    objective = models.TextField(blank=True)
-    review_date = models.DateField(null=True, blank=True)
+    name = models.CharField(max_length=255, verbose_name=_("Name"))
+    owner = models.CharField(max_length=255, blank=True, verbose_name=_("Owner"))
+    status = models.CharField(max_length=32, choices=STATUS_CHOICES, default=STATUS_DRAFT, verbose_name=_("Status"))
+    objective = models.TextField(blank=True, verbose_name=_("Objective"))
+    review_date = models.DateField(null=True, blank=True, verbose_name=_("Review date"))
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -717,16 +1271,16 @@ class ComplianceFramework(models.Model):
     STATUS_ACTIVE = "active"
     STATUS_RETIRED = "retired"
     STATUS_CHOICES = [
-        (STATUS_DRAFT, "Draft"),
-        (STATUS_ACTIVE, "Active"),
-        (STATUS_RETIRED, "Retired"),
+        (STATUS_DRAFT, _("Draft")),
+        (STATUS_ACTIVE, _("Active")),
+        (STATUS_RETIRED, _("Retired")),
     ]
 
-    name = models.CharField(max_length=255)
-    code = models.CharField(max_length=64, unique=True)
-    owner = models.CharField(max_length=255, blank=True)
-    status = models.CharField(max_length=32, choices=STATUS_CHOICES, default=STATUS_DRAFT)
-    description = models.TextField(blank=True)
+    name = models.CharField(max_length=255, verbose_name=_("Name"))
+    code = models.CharField(max_length=64, unique=True, verbose_name=_("Code"))
+    owner = models.CharField(max_length=255, blank=True, verbose_name=_("Owner"))
+    status = models.CharField(max_length=32, choices=STATUS_CHOICES, default=STATUS_DRAFT, verbose_name=_("Status"))
+    description = models.TextField(blank=True, verbose_name=_("Description"))
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -745,21 +1299,21 @@ class ComplianceRequirement(models.Model):
     STATUS_NA = "not_applicable"
     STATUS_UNKNOWN = "unknown"
     STATUS_CHOICES = [
-        (STATUS_COMPLIANT, "Compliant"),
-        (STATUS_PARTIAL, "Partially Compliant"),
-        (STATUS_NONCOMPLIANT, "Non-Compliant"),
-        (STATUS_NA, "Not Applicable"),
-        (STATUS_UNKNOWN, "Unknown"),
+        (STATUS_COMPLIANT, _("Compliant")),
+        (STATUS_PARTIAL, _("Partially Compliant")),
+        (STATUS_NONCOMPLIANT, _("Non-Compliant")),
+        (STATUS_NA, _("Not Applicable")),
+        (STATUS_UNKNOWN, _("Unknown")),
     ]
 
-    framework = models.ForeignKey(ComplianceFramework, on_delete=models.CASCADE, related_name="requirements")
-    code = models.CharField(max_length=64)
-    title = models.CharField(max_length=255)
-    description = models.TextField(blank=True)
-    status = models.CharField(max_length=32, choices=STATUS_CHOICES, default=STATUS_UNKNOWN)
-    control = models.ForeignKey(RiskControl, on_delete=models.SET_NULL, null=True, blank=True, related_name="compliance_requirements")
-    evidence = models.TextField(blank=True)
-    last_reviewed = models.DateField(null=True, blank=True)
+    framework = models.ForeignKey(ComplianceFramework, on_delete=models.CASCADE, related_name="requirements", verbose_name=_("Framework"))
+    code = models.CharField(max_length=64, verbose_name=_("Code"))
+    title = models.CharField(max_length=255, verbose_name=_("Title"))
+    description = models.TextField(blank=True, verbose_name=_("Description"))
+    status = models.CharField(max_length=32, choices=STATUS_CHOICES, default=STATUS_UNKNOWN, verbose_name=_("Status"))
+    control = models.ForeignKey(RiskControl, on_delete=models.SET_NULL, null=True, blank=True, related_name="compliance_requirements", verbose_name=_("Control"))
+    evidence = models.TextField(blank=True, verbose_name=_("Evidence"))
+    last_reviewed = models.DateField(null=True, blank=True, verbose_name=_("Last reviewed"))
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

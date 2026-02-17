@@ -35,12 +35,12 @@
     <g id="edges"></g>
     <g id="nodes"></g>
   </svg>
-  {{ linked_assets_json|json_script:"risk-linked-assets" }}
-  {{ dependency_edges_json|json_script:"risk-dependency-edges" }}
+  {{ linked_assets_json|json_script:"risk-linked-assets-json" }}
+  {{ dependency_edges_json|json_script:"risk-dependency-edges-json" }}
   <script>
     (function () {
-      const nodeDataEl = document.getElementById("risk-linked-assets");
-      const edgeDataEl = document.getElementById("risk-dependency-edges");
+      const nodeDataEl = document.getElementById("risk-linked-assets-json");
+      const edgeDataEl = document.getElementById("risk-dependency-edges-json");
       const svg = document.getElementById("dependency-graph");
       if (!nodeDataEl || !edgeDataEl || !svg) return;
 

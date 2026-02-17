@@ -55,6 +55,7 @@ from .serializers import (
     ControlTestPlanSerializer,
     ControlTestRunSerializer,
 )
+from .services.resilience import evaluate_incident_by_id
 
 
 class RiskScoringMethodViewSet(viewsets.ModelViewSet):
@@ -99,6 +100,24 @@ class RiskTreatmentViewSet(viewsets.ModelViewSet):
             metadata={"risk_id": treatment.risk_id},
             request=self.request,
         )
+
+
+@decorators.api_view(["POST"])
+@decorators.permission_classes([IsAuthenticated])
+def evaluate_incident(request):
+    incident_id = request.data.get("incident_id")
+    if not incident_id:
+        return response.Response({"detail": "incident_id is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        incident_id = int(incident_id)
+    except (TypeError, ValueError):
+        return response.Response({"detail": "incident_id must be an integer."}, status=status.HTTP_400_BAD_REQUEST)
+
+    services = evaluate_incident_by_id(incident_id)
+    if services is None:
+        return response.Response({"detail": "Incident not found."}, status=status.HTTP_404_NOT_FOUND)
+    return response.Response({"services": services})
 
 
 class RiskReviewViewSet(viewsets.ModelViewSet):

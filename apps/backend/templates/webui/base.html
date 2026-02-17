@@ -8,7 +8,6 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
     <script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.9/dist/cdn.min.js" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js" defer></script>
     <style>
       body { font-family: "Segoe UI", Tahoma, sans-serif; margin: 0; background: #f2f5f8; color: #1b2733; }
       .layout { display: grid; grid-template-columns: 230px 1fr; min-height: 100vh; }
@@ -44,13 +43,16 @@
       .filter-grid { display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 10px; align-items: center; }
       .badge { display: inline-block; padding: 2px 7px; border-radius: 6px; background: #e6edf6; }
       .actions { display: flex; gap: 8px; align-items: center; }
+      .pagination-jump { display: inline-flex; align-items: center; gap: 6px; }
+      .pagination-jump input { width: 90px; margin: 0; }
       .htmx-indicator { display: none; }
       .htmx-request .htmx-indicator { display: inline; }
       .nav-group { margin-top: 12px; }
-      .nav-group summary { cursor: pointer; font-weight: 600; padding: 6px 0; list-style: none; color: #1e2a36; }
+      .nav-group summary { cursor: pointer; font-weight: 600; padding: 8px 10px; list-style: none; color: #0f2d46; background: #d9e6f2; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; border: 1px solid #c3d7ea; }
+      .nav-group summary:hover { background: #c9dceb; }
       .nav-group summary::-webkit-details-marker { display: none; }
-      .nav-group[open] summary { color: #1e2a36; }
-      .nav-group .nav-items { display: flex; flex-direction: column; gap: 6px; margin: 6px 0 10px; }
+      .nav-group[open] summary { color: #0f2d46; background: #c0d6e8; }
+      .nav-group .nav-items { display: flex; flex-direction: column; gap: 6px; margin: 8px 0 12px; }
       .nav-group .nav-items a { padding-left: 4px; }
       @media (max-width: 900px) {
         .layout { grid-template-columns: 1fr; }
@@ -67,7 +69,7 @@
         <a href="{% url 'webui:dashboard' %}">{% trans "Dashboard" %}</a>
         <a href="{% url 'webui:work-queue' %}">{% trans "Work Queue" %}</a>
 
-        <details class="nav-group" open>
+        <details class="nav-group">
           <summary>{% trans "Risk" %}</summary>
           <div class="nav-items">
             <a href="{% url 'webui:risk-list' %}">{% trans "Risks" %}</a>
@@ -88,7 +90,7 @@
           </div>
         </details>
 
-        <details class="nav-group" open>
+        <details class="nav-group">
           <summary>{% trans "Compliance" %}</summary>
           <div class="nav-items">
             {% if can_manage_governance %}
@@ -100,6 +102,17 @@
             <a href="{% url 'webui:compliance-frameworks' %}">{% trans "Compliance Frameworks" %}</a>
             <a href="{% url 'webui:compliance-requirements' %}">{% trans "Compliance Requirements" %}</a>
             {% endif %}
+          </div>
+        </details>
+
+        <details class="nav-group">
+          <summary>{% trans "Resilience" %}</summary>
+          <div class="nav-items">
+            <a href="{% url 'webui:critical-services' %}">{% trans "Critical Services" %}</a>
+            <a href="{% url 'webui:bia-profiles' %}">{% trans "BIA" %}</a>
+            <a href="{% url 'webui:hazards' %}">{% trans "Hazards" %}</a>
+            <a href="{% url 'webui:scenarios' %}">{% trans "Scenarios" %}</a>
+            <a href="{% url 'webui:continuity-strategies' %}">{% trans "Continuity Strategies" %}</a>
           </div>
         </details>
 
@@ -162,6 +175,71 @@
       </main>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const goToLabel = "{% trans 'Go to' %}";
+        const goLabel = "{% trans 'Go' %}";
+        const pageSpans = Array.from(document.querySelectorAll(".actions .muted")).filter((el) =>
+          el.textContent.includes("/")
+        );
+        pageSpans.forEach((span) => {
+          const container = span.closest(".actions") || span.parentElement;
+          if (!container || container.querySelector(".pagination-jump")) return;
+          const links = container.querySelectorAll("a[href]");
+          let pageParam = null;
+          links.forEach((link) => {
+            const text = link.textContent.trim().toLowerCase();
+            if (text === "previous" || text === "onceki" || text === "önceki") {
+              link.textContent = "<";
+            }
+            if (text === "next" || text === "sonraki") {
+              link.textContent = ">";
+            }
+            if (pageParam) return;
+            try {
+              const url = new URL(link.getAttribute("href"), window.location.href);
+              for (const [key, val] of url.searchParams.entries()) {
+                if (key.toLowerCase().includes("page") && /^\\d+$/.test(val)) {
+                  pageParam = key;
+                  break;
+                }
+              }
+            } catch (err) {}
+          });
+          const parts = span.textContent.split("/");
+          const current = parts.length > 0 ? parseInt(parts[0].replace(/\\D/g, ""), 10) : 1;
+          const total = parts.length > 1 ? parseInt(parts[1].replace(/\\D/g, ""), 10) : null;
+          if (!pageParam || !total) return;
+          const wrapper = document.createElement("div");
+          wrapper.className = "pagination-jump";
+          const maxOptions = Math.min(total, 200);
+          const options = Array.from({ length: maxOptions }, (_, idx) => {
+            const value = idx + 1;
+            const selected = value === current ? "selected" : "";
+            return `<option value="${value}" ${selected}>${value}</option>`;
+          }).join("");
+          wrapper.innerHTML = `
+            <label class="muted">${goToLabel}</label>
+            <select aria-label="${goToLabel}">${options}</select>
+            <span class="muted">/ ${total}</span>
+            <button type="button" class="btn btn-outline-secondary btn-sm">${goLabel}</button>
+          `;
+          const select = wrapper.querySelector("select");
+          const button = wrapper.querySelector("button");
+          const go = () => {
+            const value = parseInt(select.value, 10);
+            if (!value) return;
+            const url = new URL(window.location.href);
+            url.searchParams.set(pageParam, value);
+            window.location.href = url.toString();
+          };
+          button.addEventListener("click", go);
+          select.addEventListener("change", go);
+          container.appendChild(wrapper);
+        });
+      });
+    </script>
     {% block extra_js %}{% endblock %}
   </body>
 </html>

@@ -1,0 +1,69 @@
+{% extends "webui/base.html" %}
+{% load i18n %}
+{% block content %}
+<div class="card">
+  <h1>{% trans "Hazards" %}</h1>
+  <p class="muted">{% trans "Model natural, industrial, utility, and cyber hazards and link them to services and assets." %}</p>
+  <form method="get" class="filter-grid" style="margin-top: 12px;">
+    <div>
+      <input id="hazard-filter" type="text" name="q" value="{{ query }}" placeholder="{% trans 'Code or name' %}" aria-label="{% trans 'Search Hazards' %}" />
+    </div>
+    <div class="actions">
+      <button type="submit" class="btn btn-primary">{% trans "Filter" %}</button>
+      {% if can_manage_risks %}
+        <a href="{% url 'webui:hazard-new' %}" class="btn btn-success">{% trans "New Hazard" %}</a>
+      {% endif %}
+    </div>
+  </form>
+</div>
+
+<div class="card">
+  <h2>{% trans "Hazard Library" %}</h2>
+  <table class="table table-striped table-hover">
+    <thead>
+      <tr>
+        <th>{% trans "Code" %}</th>
+        <th>{% trans "Name" %}</th>
+        <th>{% trans "Type" %}</th>
+        <th>{% trans "Likelihood" %}</th>
+        <th>{% trans "Actions" %}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in hazards %}
+      <tr>
+        <td>{{ item.code }}</td>
+        <td>{{ item.name }}</td>
+        <td>{{ item.get_hazard_type_display }}</td>
+        <td>{{ item.default_likelihood }}</td>
+        <td class="actions">
+          <a href="{% url 'webui:hazard-detail' item.id %}" class="btn btn-outline-secondary btn-sm">{% trans "Edit" %}</a>
+          {% if can_manage_risks %}
+          <form method="post" style="display:inline;" onsubmit="return confirm('{% trans "Delete this hazard?" %}');">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="delete" />
+            <input type="hidden" name="hazard_id" value="{{ item.id }}" />
+            <input type="hidden" name="return_q" value="{{ query }}" />
+            <button type="submit" class="btn btn-danger btn-sm">{% trans "Delete" %}</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5">{% trans "No hazards found." %}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% if page_obj %}
+  <div class="actions" style="margin-top: 12px; justify-content: flex-end;">
+    {% if page_obj.has_previous %}
+      <a class="btn btn-outline-secondary btn-sm" href="?q={{ query }}&page={{ page_obj.previous_page_number }}">{% trans "Previous" %}</a>
+    {% endif %}
+    <span class="muted">{% trans "Page" %} {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+      <a class="btn btn-outline-secondary btn-sm" href="?q={{ query }}&page={{ page_obj.next_page_number }}">{% trans "Next" %}</a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

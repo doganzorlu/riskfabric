@@ -15,9 +15,9 @@
     <tbody>
       {% for row in by_section %}
       <tr>
-        <td>{{ row.business_unit__code }}</td>
-        <td>{{ row.cost_center__code }}</td>
-        <td>{{ row.section__code }}</td>
+        <td>{{ row.business_unit__name|default:row.business_unit__code }}</td>
+        <td>{{ row.cost_center__name|default:row.cost_center__code }}</td>
+        <td>{{ row.section__name|default:row.section__code }}</td>
         <td>{{ row.total_risks }}</td>
         <td>{{ row.open_risks }}</td>
       </tr>
@@ -54,10 +54,10 @@
         <td>{{ risk.owner }}</td>
         <td>{{ risk.due_date }}</td>
         <td>{{ risk.primary_asset.asset_code }}</td>
-        <td>{% if risk.business_unit %}{{ risk.business_unit.code }}{% endif %}</td>
-        <td>{% if risk.cost_center %}{{ risk.cost_center.code }}{% endif %}</td>
-        <td>{% if risk.section %}{{ risk.section.code }}{% endif %}</td>
-        <td>{% if risk.asset_type %}{{ risk.asset_type.code }}{% endif %}</td>
+        <td>{% if risk.business_unit %}{{ risk.business_unit.name }}{% endif %}</td>
+        <td>{% if risk.cost_center %}{{ risk.cost_center.name }}{% endif %}</td>
+        <td>{% if risk.section %}{{ risk.section.name }}{% endif %}</td>
+        <td>{% if risk.asset_type %}{{ risk.asset_type.name }}{% endif %}</td>
       </tr>
       {% empty %}
       <tr><td colspan="10">{% trans "No risks for selected location filters." %}</td></tr>

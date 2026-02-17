@@ -1,0 +1,33 @@
+{% load i18n %}
+{% with jump_param=page_param|default:"page" %}
+  <div class="pagination-jump" data-page-param="{{ jump_param }}">
+    <label class="muted">{% trans "Go to" %}</label>
+    <input type="number" min="1" max="{{ page_obj.paginator.num_pages }}" value="{{ page_obj.number }}" aria-label="{% trans 'Go to page' %}" />
+    <span class="muted">/ {{ page_obj.paginator.num_pages }}</span>
+    <button type="button" class="btn btn-outline-secondary btn-sm" data-page-jump-btn>{% trans "Go" %}</button>
+  </div>
+{% endwith %}
+<script>
+  (function () {
+    const container = document.currentScript?.previousElementSibling;
+    if (!container || !container.dataset.pageParam) return;
+    const input = container.querySelector("input");
+    const button = container.querySelector("[data-page-jump-btn]");
+    if (!input || !button) return;
+    const pageParam = container.dataset.pageParam || "page";
+    const go = () => {
+      const value = parseInt(input.value, 10);
+      if (!value) return;
+      const url = new URL(window.location.href);
+      url.searchParams.set(pageParam, value);
+      window.location.href = url.toString();
+    };
+    button.addEventListener("click", go);
+    input.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        go();
+      }
+    });
+  })();
+</script>

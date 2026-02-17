@@ -7,7 +7,7 @@ RiskFabric is an EAM-integrated risk management platform. It can run:
 - As an embedded EAM risk module.
 - As a standalone risk management application.
 
-The target capability baseline is feature parity with the core SimpleRisk model, adapted to an asset-first enterprise asset management context.
+The target capability baseline is feature parity with the core SimpleRisk model, adapted to an asset-first enterprise asset management context. The platform now also expands to a service-oriented organizational resilience model that anchors continuity and BIA at the Critical Service level.
 
 ## 2. Core Product Principles
 
@@ -106,3 +106,7 @@ UI and client strategy:
 - Phase 4: Pilot go-live and hypercare (2 weeks)
 
 Total estimate: 17 weeks.
+
+## 8. Resilience Expansion
+
+The service-oriented resilience architecture is defined in `docs/resilience-architecture.md`.

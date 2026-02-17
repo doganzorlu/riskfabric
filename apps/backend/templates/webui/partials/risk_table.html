@@ -1,5 +1,10 @@
 {% load i18n %}
-<p class="muted"><span class="badge">{{ risks|length }}</span> {% trans "risks listed" %}</p>
+<p class="muted">
+  <span class="badge">{{ risks|length }}</span> {% trans "risks listed" %}
+  {% if is_paginated %}
+    <span class="muted">({% trans "Page" %} {{ page_obj.number }} / {{ page_obj.paginator.num_pages }})</span>
+  {% endif %}
+</p>
 <table class="table table-striped table-hover">
   <thead>
     <tr>
@@ -50,3 +55,20 @@
     {% endfor %}
   </tbody>
 </table>
+{% if is_paginated %}
+  <div class="actions" style="justify-content: flex-end;">
+    {% if page_obj.has_previous %}
+      <a class="btn btn-outline-secondary btn-sm"
+         hx-get="?page={{ page_obj.previous_page_number }}&q={{ query }}&status={{ selected_status }}&business_unit_code={{ selected_business_unit_code }}"
+         hx-target="#risk-table-container"
+         hx-push-url="true">{% trans "Previous" %}</a>
+    {% endif %}
+    <span class="muted">{% trans "Page" %} {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+      <a class="btn btn-outline-secondary btn-sm"
+         hx-get="?page={{ page_obj.next_page_number }}&q={{ query }}&status={{ selected_status }}&business_unit_code={{ selected_business_unit_code }}"
+         hx-target="#risk-table-container"
+         hx-push-url="true">{% trans "Next" %}</a>
+    {% endif %}
+  </div>
+{% endif %}
